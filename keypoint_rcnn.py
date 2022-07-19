@@ -56,53 +56,22 @@ class FootKeypointsDataset(Dataset):
         with open(self.json_file, "r") as f:
             self.label_file = json.load(f)
 
-        # annots = self.label_file["annotations"]
-
-        # self.keypoints = [l["keypoints"] for l in annots]
-        # keypoints_x = torch.tensor(
-        #     [[k[l] for l in range(len(k)) if l % 3 == 0] for k in self.keypoints]
-        # )
-        # keypoints_y = torch.tensor(
-        #     [[k[l] for l in range(len(k)) if l % 3 == 1] for k in self.keypoints]
-        # )
-        # keypoints_v = torch.tensor(
-        #     [[k[l] for l in range(len(k)) if l % 3 == 2] for k in self.keypoints]
-        # )
-        # self.keypoints = torch.stack((keypoints_x, keypoints_y, keypoints_v)).permute(
-        #     1, 2, 0
-        # )
-
-        # self.img_ids = [l["image_id"] for l in annots]
-        # self.img_list = [
-        #     f'{self.dataset_dir}/{"0" * (12 - len(str(i)))}{i}.jpg'
-        #     for i in self.img_ids
-        # ]
-
     def __len__(self) -> int:
         return len(self.ids)
-        # return len(self.anns)
 
     def __getitem__(self, idx: int):
         img_id = self.ids[idx]
         path = self.cocoanns.loadImgs(img_id)[0]["file_name"]
-        # path = f'{"0" * (12 - len(str(img_id)))}{img_id}.jpg'
         img = Image.open(os.path.join(self.dataset_dir, path)).convert("RGB")
 
-        # img = Image.open(self.img_list[idx]).convert("RGB")
         img = T.transforms.ToTensor()(img)
-        # plt.imshow(img)
-        # plt.show()
-        # keypoints = self.keypoints[idx]
-        # keypoints = torch.as_tensor(keypoints, dtype=torch.unint8)
         keypoints = torch.as_tensor(self.anns[idx]["keypoints"], dtype=torch.float)
         keypoints = torch.reshape(keypoints, (1, 17, 3))
         masks = self.cocoanns.annToMask(self.anns[idx])
         masks = torch.as_tensor(masks, dtype=torch.uint8).unsqueeze(1)
         masks = masks.permute(1, 0, 2)
-        # print(keypoints.shape)
 
         obj_ids = np.unique(masks)
-        # first id is the background, so remove it
         obj_ids = obj_ids[1:]
         # Bounding boxes for objects
         # In coco format, bbox = [xmin, ymin, width, height]
@@ -110,24 +79,14 @@ class FootKeypointsDataset(Dataset):
         boxes = []
         bbox = self.anns[idx]["bbox"]
         num_objs = len(obj_ids)
-        # for i in range(num_objs):
-        # pos = np.where(masks[i])
-        # xmin = bbox[0]
-        # ymin = bbox[1]
-        # xmax = xmin + bbox[2]
-        # ymax = ymin + bbox[3]
-        # boxes.append([xmin, ymin, xmax, ymax])
         xmin = bbox[0]
         ymin = bbox[1]
         xmax = xmin + bbox[2]
         ymax = ymin + bbox[3]
         boxes.append([xmin, ymin, xmax, ymax])
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        # print(boxes)
-        # print(boxes.shape)
 
         # there is only 1 class - person, which is 1
-        # num_objs = len(self.img_list)
         labels = torch.ones((1), dtype=torch.int64)
 
         image_id = self.anns[idx]["image_id"]
@@ -135,13 +94,6 @@ class FootKeypointsDataset(Dataset):
 
         area = torch.tensor(boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
-        # area = (
-        #     torch.tensor(boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
-        # ).to(self.device)
-        # suppose all instances are not crowd
-        # iscrowd = torch.zeros((1,), dtype=torch.int64)
-        # iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
-        # area = torch.as_tensor([self.anns[idx]["area"]], dtype=torch.float32)
         iscrowd = torch.as_tensor([self.anns[idx]["iscrowd"]], dtype=torch.int64)
         num_keypoints = torch.tensor(self.anns[idx]["num_keypoints"], dtype=torch.int64)
         target = {}
@@ -159,13 +111,6 @@ class FootKeypointsDataset(Dataset):
             img, target = self.transforms(img, target)
 
         return img, target
-
-
-# dataset = FootKeypointsDataset(
-#     "COCO_images/val2017", "COCO_annotations/person_keypoints_val2017.json",
-# )
-# print(dataset)
-# train_dl = DataLoader(d , batch_size=100)
 
 
 # load a model pre-trained pre-trained on COCO
@@ -265,12 +210,6 @@ def get_model_instance_segmentation(num_classes):
 
 
 def get_model_keypoints(num_classes):
-    # keypoint_roi_pooler = torchvision.ops.MultiScaleRoIAlign(
-    #     featmap_names=["0"], output_size=14, sampling_ratio=2
-    # )
-    # model = torchvision.models.detection.keypointrcnn_resnet50_fpn(
-    #     pretrained=False, keypoint_roi_pool=keypoint_roi_pooler
-    # )
     # num_kp = 6
     num_kp = 17
     model = torchvision.models.detection.keypointrcnn_resnet50_fpn(pretrained=False)
@@ -314,40 +253,15 @@ def main():
     num_classes = 2
     # use our dataset and defined transformations
     dataset = FootKeypointsDataset(
-        # "COCO_images/train2017",
-        # "COCO_annotations/person_keypoints_train2017.json",
-        # "COCO_annotations/person_keypoints_val2017.json",
         "/media/10TB/coco_kp_dataset/val2017",
         "/media/10TB/coco_kp_dataset/annotations_trainval2017/annotations/person_keypoints_val2017.json",
-        # "COCO_images/val2017",
-        # "COCO_annotations/person_keypoints_val2017_foot_v1.json",
         get_transform(train=True),
     )
     dataset_test = FootKeypointsDataset(
-        # "COCO_images/train2017",
-        # "COCO_annotations/person_keypoints_train2017.json",
-        # "COCO_images/val2017",
-        # "COCO_annotations/person_keypoints_val2017_foot_v1.json",
         "/media/10TB/coco_kp_dataset/val2017",
         "/media/10TB/coco_kp_dataset/annotations_trainval2017/annotations/person_keypoints_val2017.json",
-        # "COCO_annotations/person_keypoints_val2017.json",
         get_transform(train=False),
     )
-
-    # dataset = CustomCocoDetection(
-    #     # "COCO_images/val2017",
-    #     # "COCO_annotations/person_keypoints_val2017.json",
-    #     "COCO_images/train2017",
-    #     "COCO_annotations/person_keypoints_train2017.json",
-    #     transform=transforms.ToTensor(),
-    # )
-    # dataset_test = CustomCocoDetection(
-    #     # "COCO_images/val2017",
-    #     # "COCO_annotations/person_keypoints_val2017.json",
-    #     "COCO_images/train2017",
-    #     "COCO_annotations/person_keypoints_train2017.json",
-    #     transform=transforms.ToTensor(),
-    # )
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
@@ -397,12 +311,6 @@ def main():
     torch.save(model, "models/entire_model3")
 
 
-# def to_tensor(img):
-#     # img = Image.open(self.img_list[idx]).convert("RGB")
-#     img = transforms.ToTensor()(img)
-#     return img, target
-
-
 def test_model(img_path, model, kp=True):
     model.eval()
     img = Image.open(img_path)
@@ -411,7 +319,6 @@ def test_model(img_path, model, kp=True):
     if kp:
         print(pred)
         print(pred[0].shape)
-        # plt.scatter([])
 
         plt.imshow(img.permute(1, 2, 0).detach().cpu().numpy())
     else:
