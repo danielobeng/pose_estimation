@@ -1,0 +1,204 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/dan/Project_APE/krcnn_experimentns/model_1/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	/d14f055e/
+BATCH_SIZE	keypoint_rcnn.py	/^BATCH_SIZE = 1$/;"	v
+COCOanalyze	cocoanalyze.py	/^class COCOanalyze:$/;"	c
+CocoDetection	coco_utils.py	/^class CocoDetection(torchvision.datasets.CocoDetection):$/;"	c
+CocoEvaluator	coco_eval.py	/^class CocoEvaluator(object):$/;"	c
+Compose	transforms.py	/^class Compose(object):$/;"	c
+ConvertCocoPolysToMask	coco_utils.py	/^class ConvertCocoPolysToMask(object):$/;"	c
+CustomKeypointRCNN	model/model.py	/^class CustomKeypointRCNN(KeypointRCNN):$/;"	c
+EPOCHS	keypoint_rcnn.py	/^EPOCHS = 1$/;"	v
+F	transforms.py	/^from torchvision.transforms import functional as F$/;"	x	nameref:unknown:functional
+FLIP_LEFT_RIGHT	keypoint.py	/^FLIP_LEFT_RIGHT = 0$/;"	v
+FLIP_MAP	keypoint.py	/^    FLIP_MAP = {$/;"	v	class:PersonKeypoints
+FLIP_TOP_BOTTOM	keypoint.py	/^FLIP_TOP_BOTTOM = 1$/;"	v
+FilterAndRemapCocoCategories	coco_utils.py	/^class FilterAndRemapCocoCategories(object):$/;"	c
+FootKeypointsDataset	model/dataset.py	/^class FootKeypointsDataset(Dataset):$/;"	c
+Keypoints	keypoint.py	/^class Keypoints(object):$/;"	c
+LR	keypoint_rcnn.py	/^LR = 1e-3$/;"	v
+MetricLogger	utils.py	/^class MetricLogger(object):$/;"	c
+NAMES	keypoint.py	/^    NAMES = [$/;"	v	class:PersonKeypoints
+NUM_CLASSES	keypoint_rcnn.py	/^NUM_CLASSES = 2$/;"	v
+NUM_KEYPOINTS	keypoint_rcnn.py	/^NUM_KEYPOINTS = 23$/;"	v
+NUM_WORKERS	keypoint_rcnn.py	/^NUM_WORKERS = 1$/;"	v
+Params	cocoanalyze.py	/^class Params:$/;"	c
+PersonKeypoints	keypoint.py	/^class PersonKeypoints(Keypoints):$/;"	c
+RandomHorizontalFlip	transforms.py	/^class RandomHorizontalFlip(object):$/;"	c
+SmoothedValue	utils.py	/^class SmoothedValue(object):$/;"	c
+T	coco_utils.py	/^import transforms as T$/;"	I	nameref:module:transforms
+T	model/dataset.py	/^import torchvision.transforms as T$/;"	I	nameref:module:torchvision.transforms
+ToTensor	transforms.py	/^class ToTensor(object):$/;"	c
+__author__	cocoanalyze.py	/^__author__ = "mrr"$/;"	v
+__builtin__	utils.py	/^    import builtins as __builtin__$/;"	I	function:setup_for_distributed	file:	nameref:module:builtins
+__call__	coco_utils.py	/^    def __call__(self, image, target):$/;"	m	class:ConvertCocoPolysToMask
+__call__	coco_utils.py	/^    def __call__(self, image, target):$/;"	m	class:FilterAndRemapCocoCategories
+__call__	transforms.py	/^    def __call__(self, image, target):$/;"	m	class:Compose
+__call__	transforms.py	/^    def __call__(self, image, target):$/;"	m	class:RandomHorizontalFlip
+__call__	transforms.py	/^    def __call__(self, image, target):$/;"	m	class:ToTensor
+__getattr__	utils.py	/^    def __getattr__(self, attr):$/;"	m	class:MetricLogger
+__getitem__	coco_utils.py	/^    def __getitem__(self, idx):$/;"	m	class:CocoDetection
+__getitem__	keypoint.py	/^    def __getitem__(self, item):$/;"	m	class:Keypoints
+__getitem__	model/dataset.py	/^    def __getitem__(self, idx: int):$/;"	m	class:FootKeypointsDataset
+__init__	coco_eval.py	/^    def __init__(self, coco_gt, iou_types):$/;"	m	class:CocoEvaluator
+__init__	coco_utils.py	/^    def __init__(self, categories, remap=True):$/;"	m	class:FilterAndRemapCocoCategories
+__init__	coco_utils.py	/^    def __init__(self, img_folder, ann_file, transforms):$/;"	m	class:CocoDetection
+__init__	cocoanalyze.py	/^    def __init__(self, cocoGt, cocoDt, iouType="keypoints"):$/;"	m	class:COCOanalyze
+__init__	cocoanalyze.py	/^    def __init__(self, iouType="keypoints"):$/;"	m	class:Params
+__init__	keypoint.py	/^    def __init__(self, keypoints, size, mode=None):$/;"	m	class:Keypoints
+__init__	model/dataset.py	/^    def __init__($/;"	m	class:FootKeypointsDataset
+__init__	model/model.py	/^    def __init__(self, num_classes, num_keypoints=17, writer=None, **kwargs) -> None:$/;"	m	class:CustomKeypointRCNN	typeref:typename:None
+__init__	transforms.py	/^    def __init__(self, prob):$/;"	m	class:RandomHorizontalFlip
+__init__	transforms.py	/^    def __init__(self, transforms):$/;"	m	class:Compose
+__init__	utils.py	/^    def __init__(self, delimiter="\\t"):$/;"	m	class:MetricLogger
+__init__	utils.py	/^    def __init__(self, window_size=20, fmt=None):$/;"	m	class:SmoothedValue
+__len__	model/dataset.py	/^    def __len__(self) -> int:$/;"	m	class:FootKeypointsDataset	typeref:typename:int
+__repr__	keypoint.py	/^    def __repr__(self):$/;"	m	class:Keypoints
+__repr__	model/dataset.py	/^    def __repr__(self) -> str:$/;"	m	class:FootKeypointsDataset	typeref:typename:str
+__str__	cocoanalyze.py	/^    def __str__(self):$/;"	m	class:COCOanalyze
+__str__	utils.py	/^    def __str__(self):$/;"	m	class:MetricLogger
+__str__	utils.py	/^    def __str__(self):$/;"	m	class:SmoothedValue
+__version__	cocoanalyze.py	/^__version__ = "2.0"$/;"	v
+_cleanup	cocoanalyze.py	/^    def _cleanup(self):$/;"	m	class:COCOanalyze
+_coco_remove_images_without_annotations	coco_utils.py	/^def _coco_remove_images_without_annotations(dataset, cat_list=None):$/;"	f
+_correct_dt_keypoints	cocoanalyze.py	/^    def _correct_dt_keypoints(self, areaRngLbl):$/;"	m	class:COCOanalyze
+_correct_dt_scores	cocoanalyze.py	/^    def _correct_dt_scores(self, areaRngLbl):$/;"	m	class:COCOanalyze
+_count_visible_keypoints	coco_utils.py	/^    def _count_visible_keypoints(anno):$/;"	f	function:_coco_remove_images_without_annotations	file:
+_create_flip_indices	keypoint.py	/^def _create_flip_indices(names, flip_map):$/;"	f
+_find_dt_gt_matches	cocoanalyze.py	/^    def _find_dt_gt_matches(self, oksThrs, areaRng, areaRngLbl):$/;"	m	class:COCOanalyze
+_find_kpt_errors	cocoanalyze.py	/^    def _find_kpt_errors(self):$/;"	m	class:COCOanalyze
+_flip_coco_person_keypoints	transforms.py	/^def _flip_coco_person_keypoints(kps, width):$/;"	f
+_get_iou_types	engine.py	/^def _get_iou_types(model):$/;"	f
+_has_only_empty_bbox	coco_utils.py	/^    def _has_only_empty_bbox(anno):$/;"	f	function:_coco_remove_images_without_annotations	file:
+_has_valid_annotation	coco_utils.py	/^    def _has_valid_annotation(anno):$/;"	f	function:_coco_remove_images_without_annotations	file:
+_plot	cocoanalyze.py	/^    def _plot($/;"	m	class:COCOanalyze
+_soft_nms	cocoanalyze.py	/^    def _soft_nms(self, max_oks):$/;"	m	class:COCOanalyze
+_summarize	cocoanalyze.py	/^    def _summarize(err_types, ps_mat, rs_mat, oksThrs, areaRngLbl, maxDets):$/;"	m	class:COCOanalyze
+_summarize_baseline	cocoanalyze.py	/^    def _summarize_baseline(self):$/;"	m	class:COCOanalyze
+_summarize_bckgd_errors	cocoanalyze.py	/^    def _summarize_bckgd_errors(self):$/;"	m	class:COCOanalyze
+_summarize_kpt_errors	cocoanalyze.py	/^    def _summarize_kpt_errors(self):$/;"	m	class:COCOanalyze
+_summarize_score_errors	cocoanalyze.py	/^    def _summarize_score_errors(self):$/;"	m	class:COCOanalyze
+_test	model/model.py	/^    def _test(self, data_loader_test, device):$/;"	m	class:CustomKeypointRCNN
+_train	model/model.py	/^    def _train($/;"	m	class:CustomKeypointRCNN
+accumulate	coco_eval.py	/^    def accumulate(self):$/;"	m	class:CocoEvaluator
+add_field	keypoint.py	/^    def add_field(self, field, field_data):$/;"	m	class:Keypoints
+add_meter	utils.py	/^    def add_meter(self, name, meter):$/;"	m	class:MetricLogger
+all_gather	utils.py	/^def all_gather(data):$/;"	f
+analyze	cocoanalyze.py	/^    def analyze(self, check_kpts=True, check_scores=True, check_bckgd=True):$/;"	m	class:COCOanalyze
+avg	utils.py	/^    def avg(self):$/;"	m	class:SmoothedValue
+batch_size	keypoint_rcnn.py	/^    batch_size = opt.batch_size$/;"	v
+coco_mask	coco_utils.py	/^from pycocotools import mask as coco_mask$/;"	x	nameref:unknown:mask
+collate_fn	model/dataset.py	/^def collate_fn(batch):$/;"	f
+convert_coco_poly_to_mask	coco_utils.py	/^def convert_coco_poly_to_mask(segmentations, height, width):$/;"	f
+convert_to_coco_api	coco_utils.py	/^def convert_to_coco_api(ds):$/;"	f
+convert_to_xywh	coco_eval.py	/^def convert_to_xywh(boxes):$/;"	f
+createIndex	coco_eval.py	/^def createIndex(self):$/;"	f
+create_common_coco_eval	coco_eval.py	/^def create_common_coco_eval(coco_eval, img_ids, eval_imgs):$/;"	f
+crop	keypoint.py	/^    def crop(self, box):$/;"	m	class:Keypoints
+current_run	keypoint_rcnn.py	/^current_run = f"run_{num +1}"$/;"	v
+data_loader	keypoint_rcnn.py	/^    dataset, data_loader, valid_data, valid_loader = get_data($/;"	v
+dataset	keypoint_rcnn.py	/^    dataset, data_loader, valid_data, valid_loader = get_data($/;"	v
+device	keypoint_rcnn.py	/^    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")$/;"	v
+dist	utils.py	/^import torch.distributed as dist$/;"	I	nameref:module:torch.distributed
+ensure_dir	model/utils.py	/^def ensure_dir(dir_name: str):$/;"	f
+evaluate	coco_eval.py	/^def evaluate(self):$/;"	f
+evaluate	cocoanalyze.py	/^    def evaluate(self, verbose=False, makeplots=False, savedir=None, team_name=None):$/;"	m	class:COCOanalyze
+evaluate	engine.py	/^def evaluate(model, data_loader, device):$/;"	f
+ex	keypoint_rcnn.py	/^    ex = next(iter(data_loader))[0][0]$/;"	v
+f	utils.py	/^    def f(x):$/;"	f	function:warmup_lr_scheduler	file:
+find_bckgd_errors	cocoanalyze.py	/^    def find_bckgd_errors(self):$/;"	m	class:COCOanalyze
+find_keypoint_errors	cocoanalyze.py	/^    def find_keypoint_errors(self):$/;"	m	class:COCOanalyze
+find_score_errors	cocoanalyze.py	/^    def find_score_errors(self):$/;"	m	class:COCOanalyze
+get_coco	coco_utils.py	/^def get_coco(root, image_set, transforms, mode='instances'):$/;"	f
+get_coco_api_from_dataset	coco_utils.py	/^def get_coco_api_from_dataset(dataset):$/;"	f
+get_coco_kp	coco_utils.py	/^def get_coco_kp(root, image_set, transforms):$/;"	f
+get_data	model/dataset.py	/^def get_data(num_keypoins=17, batch_size=1, num_workers=8):$/;"	f
+get_field	keypoint.py	/^    def get_field(self, field):$/;"	m	class:Keypoints
+get_optimizer	model/ops.py	/^def get_optimizer(params, lr=0.001, momentum=0.9, weight_decay=0.0005):$/;"	f
+get_rank	utils.py	/^def get_rank():$/;"	f
+get_scheduler	model/ops.py	/^def get_scheduler(optimizer, step_size=3, gamma=0.01):$/;"	f
+get_transform	model/dataset.py	/^def get_transform(train):$/;"	f
+get_world_size	utils.py	/^def get_world_size():$/;"	f
+global_avg	utils.py	/^    def global_avg(self):$/;"	m	class:SmoothedValue
+img_grid	keypoint_rcnn.py	/^    img_grid = torchvision.utils.make_grid(ex)$/;"	v
+init_distributed_mode	utils.py	/^def init_distributed_mode(args):$/;"	f
+io	cocoanalyze.py	/^import skimage.io as io$/;"	I	nameref:module:skimage.io
+is_dist_avail_and_initialized	utils.py	/^def is_dist_avail_and_initialized():$/;"	f
+is_main_process	utils.py	/^def is_main_process():$/;"	f
+keypoints_to_heat_map	keypoint.py	/^def keypoints_to_heat_map(keypoints, rois, heatmap_size):$/;"	f
+kp_connections	keypoint.py	/^def kp_connections(keypoints):$/;"	f
+latest_run	keypoint_rcnn.py	/^latest_run = max(training_runs, key=os.path.getctime)$/;"	v
+loadRes	coco_eval.py	/^def loadRes(self, resFile):$/;"	f
+load_checkpoint	model/utils.py	/^def load_checkpoint(ckpt_dir_or_file: str, map_location=None, load_best=False):$/;"	f
+log_every	utils.py	/^    def log_every(self, iterable, print_freq, header=None):$/;"	m	class:MetricLogger
+lr	keypoint_rcnn.py	/^    lr = opt.lr$/;"	v
+lr_scheduler	keypoint_rcnn.py	/^    lr_scheduler = get_scheduler(optimizer, step_size=3, gamma=0.1)$/;"	v
+maskUtils	coco_eval.py	/^maskUtils = mask_util$/;"	v
+mask_util	coco_eval.py	/^import pycocotools.mask as mask_util$/;"	I	nameref:module:pycocotools.mask
+max	utils.py	/^    def max(self):$/;"	m	class:SmoothedValue
+median	utils.py	/^    def median(self):$/;"	m	class:SmoothedValue
+merge	coco_eval.py	/^def merge(img_ids, eval_imgs):$/;"	f
+misc_nn_ops	model/model.py	/^from torchvision.ops import misc as misc_nn_ops$/;"	x	nameref:unknown:misc
+mkdir	utils.py	/^def mkdir(path):$/;"	f
+model	keypoint_rcnn.py	/^    model = CustomKeypointRCNN(num_classes, num_keypoints=num_keypoints, writer=writer,)$/;"	v
+mpatches	cocoanalyze.py	/^import matplotlib.patches as mpatches$/;"	I	nameref:module:matplotlib.patches
+nn	model/model.py	/^import torch.nn as nn$/;"	I	nameref:module:torch.nn
+np	coco_eval.py	/^import numpy as np$/;"	I	nameref:module:numpy
+np	cocoanalyze.py	/^import numpy as np$/;"	I	nameref:module:numpy
+np	model/dataset.py	/^import numpy as np$/;"	I	nameref:module:numpy
+np	model/utils.py	/^import numpy as np$/;"	I	nameref:module:numpy
+np	utils.py	/^import numpy as np$/;"	I	nameref:module:numpy
+num	keypoint_rcnn.py	/^num = int(latest_run.name.split("_")[1])$/;"	v
+num_classes	keypoint_rcnn.py	/^    num_classes = ($/;"	v
+num_epochs	keypoint_rcnn.py	/^    num_epochs = opt.epochs$/;"	v
+num_keypoints	keypoint_rcnn.py	/^    num_keypoints = opt.num_keypoints$/;"	v
+num_workers	keypoint_rcnn.py	/^    num_workers = opt.num_workers$/;"	v
+opt	keypoint_rcnn.py	/^    opt = parser.parse_args()$/;"	v
+optim	model/ops.py	/^import torch.optim as optim$/;"	I	nameref:module:torch.optim
+optimizer	keypoint_rcnn.py	/^    optimizer = get_optimizer(params, lr=lr, momentum=0.9, weight_decay=0.0005)$/;"	v
+overlay_keypoints	utils.py	/^def overlay_keypoints(image, kps, scores):$/;"	f
+params	keypoint_rcnn.py	/^    params = model.parameters()$/;"	v
+parser	keypoint_rcnn.py	/^    parser = argparse.ArgumentParser(description="Train a keypoint estimator.")$/;"	v
+plot_example	utils.py	/^def plot_example(dataset):$/;"	f
+plot_keypoints	utils.py	/^def plot_keypoints(model, image_file):$/;"	f
+plt	cocoanalyze.py	/^import matplotlib.pyplot as plt$/;"	I	nameref:module:matplotlib.pyplot
+plt	utils.py	/^from matplotlib import pyplot as plt$/;"	x	nameref:unknown:pyplot
+prepare	coco_eval.py	/^    def prepare(self, predictions, iou_type):$/;"	m	class:CocoEvaluator
+prepare_for_coco_detection	coco_eval.py	/^    def prepare_for_coco_detection(self, predictions):$/;"	m	class:CocoEvaluator
+prepare_for_coco_keypoint	coco_eval.py	/^    def prepare_for_coco_keypoint(self, predictions):$/;"	m	class:CocoEvaluator
+prepare_for_coco_segmentation	coco_eval.py	/^    def prepare_for_coco_segmentation(self, predictions):$/;"	m	class:CocoEvaluator
+print	utils.py	/^    def print(*args, **kwargs):$/;"	f	function:setup_for_distributed	file:
+reduce_dict	utils.py	/^def reduce_dict(input_dict, average=True):$/;"	f
+resize	keypoint.py	/^    def resize(self, size, *args, **kwargs):$/;"	m	class:Keypoints
+save_checkpoint	model/utils.py	/^def save_checkpoint(state, save_path: str, is_best: bool = False, max_keep: int = None):$/;"	f
+save_on_master	utils.py	/^def save_on_master(*args, **kwargs):$/;"	f
+setKpParams	cocoanalyze.py	/^    def setKpParams(self):$/;"	m	class:Params
+setup_for_distributed	utils.py	/^def setup_for_distributed(is_master):$/;"	f
+state_dict	keypoint_rcnn.py	/^        state_dict = torch.load($/;"	v
+summarize	coco_eval.py	/^    def summarize(self):$/;"	m	class:CocoEvaluator
+summarize	cocoanalyze.py	/^    def summarize(self, makeplots=False, savedir=None, team_name=None):$/;"	m	class:COCOanalyze
+synchronize_between_processes	coco_eval.py	/^    def synchronize_between_processes(self):$/;"	m	class:CocoEvaluator
+synchronize_between_processes	utils.py	/^    def synchronize_between_processes(self):$/;"	m	class:MetricLogger
+synchronize_between_processes	utils.py	/^    def synchronize_between_processes(self):$/;"	m	class:SmoothedValue
+test_mode	keypoint_rcnn.py	/^    test_mode = opt.test_mode$/;"	v
+to	keypoint.py	/^    def to(self, *args, **kwargs):$/;"	m	class:Keypoints
+train_one_epoch	engine.py	/^def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, writer):$/;"	f
+training_runs	keypoint_rcnn.py	/^training_runs = os.scandir("training_runs\/keypoint_rcnn")$/;"	v
+transpose	keypoint.py	/^    def transpose(self, method):$/;"	m	class:Keypoints
+update	coco_eval.py	/^    def update(self, predictions):$/;"	m	class:CocoEvaluator
+update	utils.py	/^    def update(self, **kwargs):$/;"	m	class:MetricLogger
+update	utils.py	/^    def update(self, value, n=1):$/;"	m	class:SmoothedValue
+valid_data	keypoint_rcnn.py	/^    dataset, data_loader, valid_data, valid_loader = get_data($/;"	v
+valid_loader	keypoint_rcnn.py	/^    dataset, data_loader, valid_data, valid_loader = get_data($/;"	v
+value	utils.py	/^    def value(self):$/;"	m	class:SmoothedValue
+vis_keypoints	utils.py	/^def vis_keypoints(img, kps, kp_thresh=2, alpha=0.7):$/;"	f
+warmup_lr_scheduler	utils.py	/^def warmup_lr_scheduler(optimizer, warmup_iters, warmup_factor):$/;"	f
+writer	keypoint_rcnn.py	/^writer = SummaryWriter($/;"	v

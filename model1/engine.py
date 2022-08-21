@@ -10,7 +10,7 @@ from coco_eval import CocoEvaluator
 import utils
 
 
-def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq):
+def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, writer):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter("lr", utils.SmoothedValue(window_size=1, fmt="{value:.6f}"))
@@ -36,6 +36,8 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq):
         losses_reduced = sum(loss for loss in loss_dict_reduced.values())
 
         loss_value = losses_reduced.item()
+        for loss_name, loss_val in loss_dict_reduced.items():
+            writer.add_scalar(f"{loss_name}", loss_val, epoch)
 
         if not math.isfinite(loss_value):
             print("Loss is {}, stopping training".format(loss_value))
@@ -82,6 +84,7 @@ def evaluate(model, data_loader, device):
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
     for images, targets in metric_logger.log_every(data_loader, 100, header):
+        print("running")
         images = list(img.to(device) for img in images)
 
         torch.cuda.synchronize()

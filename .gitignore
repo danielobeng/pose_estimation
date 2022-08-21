@@ -3,3 +3,11 @@
 *.png
 *.jpg
 *.txt
+*.ckpt
+*.pt
+*.png
+*.mov
+*.mp4
+
+wandb/
+training_runs/
