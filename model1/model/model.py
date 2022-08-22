@@ -146,6 +146,7 @@ class CustomKeypointRCNN(KeypointRCNN):
         lr_scheduler=None,
         device=None,
         save_interval=1,
+        train_method_cb=None,
     ):
         # assert data_loader!= None:
         #     raise AssertionError('Data Loader should not be None')
@@ -174,21 +175,9 @@ class CustomKeypointRCNN(KeypointRCNN):
             position=0,
         )
 
-        scaler = torch.cuda.amp.GradScaler()
-        avg_valid_losses = []
-        avg_train_losses = []
+        avg_valid_losses, avg_train_losses = [], []
 
         for epoch in loop_epoch:
-            # train_one_epoch(
-            #     self,
-            #     optimizer,
-            #     data_loader,
-            #     device,
-            #     epoch,
-            #     print_freq=10,
-            #     writer=self.writer,
-            # )
-            # evaluate(self, data_loader, device=device)
 
             loop_epoch.write(f"|EPOCH {str(epoch)}|")
 
@@ -201,7 +190,6 @@ class CustomKeypointRCNN(KeypointRCNN):
                 total=len(self.train_dl),
             )
             step = 0
-            ex_count = 0
             total_train_loss = 0
 
             self.train()
@@ -210,42 +198,15 @@ class CustomKeypointRCNN(KeypointRCNN):
             for i, (image_batch, targets) in train_loop_batch:
                 step += 1
 
-                ex_count += len(image_batch)
-
                 # TODO: find better place for target to device
                 image_batch = list(image.to(device) for image in image_batch)
                 targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-                # image_batch[0] = image_batch[0]
-                # with torch.autocast(device_type="cuda", dtype=torch.float16):
-
-                # for t in targets[0]:
-                #     if targets[0][t].dtype == torch.float32:
-                #         targets[0][t] = targets[0][t].type(torch.float16)
-                # with profile(
-                #     activities=[ProfilerActivity.CUDA],
-                #     # on_trace_ready=torch.profiler.tensorboard_trace_handler(
-                #     #     "./log/keypoint_rcnn"
-                #     # ),
-                #     record_shapes=True,
-                #     with_stack=True,
-                #     use_cuda=True,
-                #     profile_memory=True,
-                # ) as prof:
-                #     with record_function("OUTPUT DICT"):
                 output_dict = self(image_batch, targets)
-
-                # for output in output_dict.values():
-                #     print(output.dtype)
-                #     assert output.dtype is torch.float16
 
                 train_loss = sum(loss for loss in output_dict.values())
                 total_train_loss += train_loss.item()
 
-                # assert loss.dtype is torch.float32
-
-                # c = nn.CrossEntropyLoss()
-                # loss = c(output, targets)
                 output_dict = {k + f" epoch {epoch}": v for k, v in output_dict.items()}
 
                 loss_log = {
@@ -258,26 +219,19 @@ class CustomKeypointRCNN(KeypointRCNN):
                     train_loop_batch.set_postfix(loss=train_loss.item())
                     wandb.log(loss_log)
 
-                # if ex_count > 64:
+                # assert (
+                #     train_method_cb
+                # ), "Training method not specified - needs to be either grad_accum or no_grad_accum"
+                # if train_method_cb:
+                #     print("cb called")
+                #     train_method_cb(i, train_loss, image_batch)
 
-                self.optimizer.zero_grad()
-                # scaler.scale(loss).backward()
-                train_loss.backward()
+                train_loss /= len(image_batch)
 
-                self.optimizer.step()
-                ex_count = 0
+                self.grad_accum(i, train_loss, image_batch)
 
-                if self.scheduler:
-                    self.scheduler.step()
-
-            # _, pred = torch.max(output_dict.data, dim=1)
-            # correct += (pred == targets).sum().item()
-            # accuracy = correct / self.batch_size
-            # if self.writer:
-            #     self.writer.add_scalar(
-            #         f"Loss/train Epoch {epoch}", loss.item(), step
-            #     )
-            # self.writer.add_scalar(f"batch accuracy {epoch} ", accuracy, step)
+                # torch.cuda.empty_cache()
+                # _ = gc.collect()
 
             valid_loop_batch = tqdm(
                 enumerate(self.valid_dl),
@@ -360,12 +314,16 @@ class CustomKeypointRCNN(KeypointRCNN):
             }
         )
 
-        # update the learning rate
-        # torch.save(model.state_dict(), "checkpoints/transfer_learn_added_final_layer.pt")
-        # torch.save(model.state_dict(), "checkpoints/transfer_learn_final_layer.pt")
-        # model.load_state_dict(torch.load("checkpoints/transfer_learn_final_layer_only.pt"))
+    def grad_accum(self, i, train_loss, image_batch, accum_steps=64):
+        if ((i + 1) % accum_steps) == 0 or ((i + 1) == len(image_batch)):
+            self.normal_update(train_loss)
 
-    def _test(self, data_loader_test=None, device=None):
+    def normal_update(self, train_loss):
+        self.optimizer.zero_grad()
+        train_loss.backward()
+        self.optimizer.step()
+        if self.scheduler:
+            self.scheduler.step()
 
         self.eval()
         # self._make_predictions()
