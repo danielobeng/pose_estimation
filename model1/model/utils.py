@@ -3,10 +3,15 @@ import shutil
 import numpy as np
 import torch
 from glob import glob
+from tqdm import tqdm
 
 
 def train_one_epoch(
-    model, optimizer, dl, device, epoch,
+    model,
+    optimizer,
+    dl,
+    device,
+    epoch,
 ):
     model.train()
     # do metric logging
@@ -26,13 +31,23 @@ class MetricLogger:
 
 
 def save_checkpoint(state, save_path: str, is_best: bool = False, max_keep: int = None):
-    """Saves torch model to checkpoint file.
-    Args:
-        state (torch model state): State of a torch Neural Network
-        save_path (str): Destination path for saving checkpoint
-        is_best (bool): If ``True`` creates additional copy
+    """
+    Saves torch model to checkpoint file.
+
+    Parameters
+    ----------
+        state (torch model state):
+            State of a torch Neural Network
+
+        save_path (str):
+            Destination path for saving checkpoint
+
+        is_best (bool):
+            If ``True`` creates additional copy
             ``best_model.ckpt``
-        max_keep (int): Specifies the max amount of checkpoints to keep
+
+        max_keep (int):
+            Specifies the max amount of checkpoints to keep
     """
     # save checkpoint
     torch.save(state, save_path)
@@ -63,38 +78,36 @@ def save_checkpoint(state, save_path: str, is_best: bool = False, max_keep: int 
     if is_best:
         shutil.copyfile(save_path, os.path.join(save_dir, "best_model.ckpt"))
 
+    tqdm.write(f"Checkpoint saved for epoch - {save_path}")
 
-def load_checkpoint(ckpt_dir_or_file: str, map_location=None, load_best=False):
-    """Loads torch model from checkpoint file.
-    Args:
-        ckpt_dir_or_file (str): Path to checkpoint directory or filename
-        map_location: Can be used to directly load to specific device
-        load_best (bool): If True loads ``best_model.ckpt`` if exists.
+
+def load_checkpoint(ckpt_dir_or_file: str, map_location=None):
+    """
+    Loads torch model from checkpoint file.
+
+    Parameters
+    ----------
+        ckpt_dir_or_file (str):
+            Path to checkpoint directory or filename
+
+        map_location:
+            Can be used to directly load to specific device
     """
 
-    list_of_checkpoints = glob(
-        "*.ckpt"
-    )  # * means all if need specific format then *.csv
-    latest_checkpoint_file = max(list_of_checkpoints, key=os.path.getctime)
+    list_of_checkpoints = glob("*.ckpt")
+    # latest_checkpoint_file = max(list_of_checkpoints, key=os.path.getctime)
 
-    if ckpt_dir_or_file == "latest":
-        ckpt_path = latest_checkpoint_file
+    # if ckpt_dir_or_file == "latest":
+    #     ckpt_path = latest_checkpoint_file
 
-    # if os.path.isdir(ckpt_dir_or_file):
-    #     if load_best:
-    #         ckpt_path = os.path.join(ckpt_dir_or_file, "best_model.ckpt")
-    #     else:
-    #         with open(os.path.join(ckpt_dir_or_file, "latest_checkpoint.txt")) as f:
-    #             ckpt_path = os.path.join(ckpt_dir_or_file, f.readline()[:-1])
-    else:
-        ckpt_path = ckpt_dir_or_file
+    # else:
+    ckpt_path = ckpt_dir_or_file
     ckpt = torch.load(ckpt_path, map_location=map_location)
-    print(" [*] Loading checkpoint from %s succeed!" % ckpt_path)
+    logging.info(" [*] Loading checkpoint from %s succeed!" % ckpt_path)
     return ckpt
 
 
 def ensure_dir(dir_name: str):
-    """Creates folder if not exists.
-    """
+    """Creates folder if not exists."""
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
