@@ -9,6 +9,9 @@
 *.mov
 *.mp4
 
+**/__pycache__
 wandb/
 training_runs/
 /data
+tags
+runs
