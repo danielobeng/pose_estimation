@@ -1,71 +1,3 @@
-- Githib
-	- remove __pycache
-	- remove .testing_krcnn
-	- remove inference __pycache
-	- remove model1/pycache
-	- remove model1/library mods
-	- remove model1/runs
-	- remove model1/tags
-	- remove model1/23kpbaseline results
-	- remove model1/ baseline_analysis
-	- remove model1/model/pycahce
-	- remove prc_team.pdf stuff
-- Current TODOs
-	- Train 3 epoch 17kps AdamW to compare to SGD (small scale comparison)
-	- Train 3 epoch 17kps AdamW with 1 cycle to compare to SGD (small scale comparison)
-	- Train vanilla 46 epoch to try and get similar test set numbers to original
-	- Train 3 epoch resnet152
-	- Train 3 epoch resnext/convnext?
-	- Train 3 epoch data augmentation
-	- Train 3 epoch test time augm
-	- Train 3 epoch adaptiveconcatpooling
-	- Train 46 epoch 17kps with best found config on small scale - beat vanilla
-	- Train 23 kps vanilla (<46 epochs as less data 46* 15k/size original annotation set)
-	- Train on 23kps with best settings (<46 epochs as less data 46* 15k/size original annotation set)
-==implement advanced [[pytorch tip]]==
-- how does the adaptive training work and do my custom mods break this when using from scratch model? or is it not enough iterations (try overfitting)?
-	- do I need to implement adaptive training myself?
-1. GEt baseline 17kps makes sure same results as supposed to get
-2. Run same model params on 23 kps
-3. Improve 17kps
-	1. data agumentation
-	2. test time augmentation
-	3. adaptiveconcatpooling
-	4. resnet152
-	5. maskrefinedrcnn?
-	6. other
-4. improve 23kps
-5. Performance profiling
-
-EXPERIMENTS (GOAL - BETTER MODEL)
-ARCHITECHTURE -
-RESNET100, XRESNET, CONVNEXT
-- cf timm library
-- look at how fastai replaces models
-OPTIMISERS
-AMW
-Weight decay - Jeremy says 0.1 is best
-LR finder
-- the medium blog that says better to set an dynamic lr depending on the latyer
-instead of freezing layers, so small lr in early layers is interesting
-- do fastai fine tune method (cf live coding notes)
-- do fit one cycle and scheduling
-one cycle learning rates
-TRAINING
-Gradient accumulation - make callback
-initialisation cf fastai layerwise sequentuial unit varaiance
-DATA AUGMENTATIONS
-- Test time augmentation
-- look at fastai data augmentations
-- make sure normalising
-ERROR ANALYSIS
-- look at notes full stack ml and deeplearning ai
-visualise the most incorrect images to get some insight into why
-Metrics
-- look at how detectron measure accuracy
-- implement more metrics to look at https://nanonets.com/blog/human-pose-estimation-2d-guide/#:~:text=Object%20Keypoint%20Similarity%20(OKS)%20based%20mAP%3A&text=To%20put%20it%20simply%2C%20OKS,the%20scale%20of%20the%20person.
-
-
 # Pose estimation and tracking in PyTorch
 
 ## Problem statement
@@ -137,31 +69,31 @@ $$
 	- Therefore, a variance of one pixel should be more significant for a person far into the background of an image versus a person very close to the camera.
 - $k_i$ is the standard deviation from the keypoint annotators, specific to each keypoint $i$
 	- The values for $k_i$ are in the table below. Most were calculated by the MS COCO team as the original annotators. The last 6 keypoints representing foot locations are assumed to have similar variance to wrists, as gathering more accurate values would require running a study with annotators based on where they place the markers.
-keypoint| std
--|-
-nose|0.26
-left_eye|0.25
-right_eye|0.25
-left_ear|0.35
-right_ear|0.35
-left_shoulder|0.79
-right_shoulder|0.79
-left_elbow|0.72
-right_elbow|0.72
-left_wrist|0.62
-right_wrist|0.62
-left_hip|1.07
-right_hip|1.07
-left_knee|0.87
-right_knee|0.87
-left_ankle|0.89
-right_ankle|0.89
-left_big_toe|0.62
-left_small_toe|0.62
-left_heel|0.62
-right_big_toe|0.62
-right_small_toe|0.62
-right_heel|0.62
+| keypoint        | std  |
+| --------------- | ---- |
+| nose            | 0.26 |
+| left_eye        | 0.25 |
+| right_eye       | 0.25 |
+| left_ear        | 0.35 |
+| right_ear       | 0.35 |
+| left_shoulder   | 0.79 |
+| right_shoulder  | 0.79 |
+| left_elbow      | 0.72 |
+| right_elbow     | 0.72 |
+| left_wrist      | 0.62 |
+| right_wrist     | 0.62 |
+| left_hip        | 1.07 |
+| right_hip       | 1.07 |
+| left_knee       | 0.87 |
+| right_knee      | 0.87 |
+| left_ankle      | 0.89 |
+| right_ankle     | 0.89 |
+| left_big_toe    | 0.62 |
+| left_small_toe  | 0.62 |
+| left_heel       | 0.62 |
+| right_big_toe   | 0.62 |
+| right_small_toe | 0.62 |
+| right_heel      | 0.62 |
 
 - Euler's number and the negative exponentiation are used to normalise values between 0 and 1 
 
