@@ -1,1 +1,1 @@
-docs/pose_project_journal.md
+../docs/pose_project_journal.md
