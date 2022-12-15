@@ -1,26 +1,25 @@
-from collections import defaultdict, deque
+import ast
 import datetime
+import errno
+import logging
+import os
 import pickle
+import subprocess
 import time
+from collections import defaultdict, deque
+from functools import reduce
+from random import randint
+from typing import Union
 
+import cv2
+import numpy as np
 import torch
 import torch.distributed as dist
-import torchvision
-
 from matplotlib import pyplot as plt
-
 from PIL import Image
-import numpy as np
 
-import errno
-import os
-
-import subprocess
-from random import randint
-
-
+import torchvision
 from keypoint import PersonKeypoints
-import cv2
 
 
 def plot_example(dataset):
@@ -37,33 +36,32 @@ def plot_example(dataset):
         y = i[:, 1].cpu().detach()
         ax.scatter(x, y, c="yellow")
 
-        # bbox = ["boxes"][0]
     plt.imshow(result_image)
-    # rect = plt.Rectangle(
-    # (bbox[0], bbox[1]), bbox[2] - bbox[0], bbox[3] - bbox[1], fill=None
-    # )
-    # ax.add_patch(rect)
     plt.show()
 
 
-def plot_keypoints(model, image_file):
+def plot_keypoints(model, image_file, original_kps=None):
     image = Image.open(image_file)
     image_tensor = torchvision.transforms.functional.to_tensor(image).cuda()
-    out = model([image_tensor])[0]
-    result_image = np.array(image.copy())
-    print(out["keypoints_scores"].shape)
-    print(out["keypoints_scores"].sum(dim=1))
-    best = torch.argmax(out["keypoints_scores"].sum(dim=1))
-    print(best)
-    x = out["keypoints"][best, :, 0].cpu().detach()
-    y = out["keypoints"][best, :, 1].cpu().detach()
-    # result_image = overlay_keypoints(
-    #     result_image,
-    #     out["keypoints"].cpu().detach(),
-    #     out["keypoints_scores"].cpu().detach(),
-    # )
-    plt.figure(figsize=(20, 15))
-    plt.scatter(x, y, c="yellow")
+    out = model([image_tensor])
+    for o in out:
+        result_image = np.array(image.copy())
+        n = 5
+        colors = iter(["red", "gren", "blue", "orange", "cyan"])
+
+        scores = o["scores"]
+        detect_threshold = 0.75
+        idx = torch.where(scores > detect_threshold)
+        plt.figure(figsize=(20, 15))
+        for i in idx:
+            x = o["keypoints"][i, :, 0].cpu().detach()
+            y = o["keypoints"][i, :, 1].cpu().detach()
+            plt.scatter(x, y, color=next(colors), s=1)
+        # TODO make this not less reliable on inputting list of keypoint values
+        if original_kps:
+            x_orig = original_kps[0::3]
+            y_orig = original_kps[1::3]
+            plt.scatter(x_orig, y_orig, c="white", s=1)
     plt.imshow(result_image)
     plt.show()
 
@@ -82,6 +80,7 @@ def vis_keypoints(img, kps, kp_thresh=2, alpha=0.7):
 
     dataset_keypoints = PersonKeypoints.NAMES
     kp_lines = PersonKeypoints.CONNECTIONS
+    print(kps[:2])
 
     # Convert from plt 0-1 RGBA colors to 0-255 BGR colors for opencv.
     cmap = plt.get_cmap("rainbow")
@@ -170,6 +169,108 @@ def overlay_keypoints(image, kps, scores):
     return image
 
 
+def plot_worst_images(model, data, sorted_list):
+    tuples = []
+    with open(sorted_list, "r") as f:
+        for pred in f:
+            a, b, c = pred.strip("(").replace(")", "").split(",", 2)
+            c = c.strip().strip("\n")
+            c = ast.literal_eval(c)
+            tuples.append((int(a), float(b), c))
+
+    val = tuples[:10]
+
+    for v in val:
+        img_id, score, kps = v
+        print(img_id)
+        x = "0" if len(str(img_id)) == 5 else ""
+        x = "00" if len(str(img_id)) == 4 else ""
+        x = "000" if len(str(img_id)) == 3 else ""
+        image_file = f"{data.imgPath}/000000{x}{img_id}.jpg"
+        plot_keypoints(model, image_file, kps)
+
+
+def optimize_num_workers():
+    pin_memory = True
+    logging.info("pin_memory is", pin_memory)
+    optimal_num_workers = 0
+    prev_best = 1000
+
+    for num_workers in range(0, 10, 1):
+        train_loader = torch.utils.data.DataLoader(
+            train_data,
+            batch_size=batch_size,
+            sampler=range(0, 100),
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+        )
+        start = time.time()
+        for epoch in range(1, 5):
+            for i, data in enumerate(train_loader):
+                pass
+        end = time.time()
+        current = end - start
+        optimal_num_workers = (
+            num_workers if current < prev_best else optimal_num_workers
+        )
+        prev_best = current if current < prev_best else prev_best
+
+        logging.info(f"num_workers={num_workers} | Time={current}s")
+    logging.info(f"Optimal num_workers={optimal_num_workers}")
+    return optimal_num_workers
+
+
+def get_module_by_name(
+    module: Union[torch.Tensor, torch.nn.Module], access_string: str
+):
+    """Retrieve a module nested in another by its access string.
+
+    Works even when there is a Sequential in the module.
+    """
+    names = access_string.split(sep=".")
+    return reduce(getattr, names, module)
+
+
+def test_overfit_batch(model: torch.nn.Module, num_epochs: int = 200) -> None:
+    """
+    Overfit a batch of data by running the model for a large number of epochs.
+
+    Parameters
+    ----------
+    model:
+        The model that will be used in training that we wish to test.
+
+    num_epochs:
+        The number of epochs to train on.
+
+    Returns
+    -------
+    None
+    """
+
+
+def start_timer():
+    global start_time
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.reset_max_memory_allocated()
+    torch.cuda.synchronize()
+    start_time = time.time()
+
+
+def end_timer_and_print(local_msg):
+    torch.cuda.synchronize()
+    end_time = time.time()
+    print("\n" + local_msg)
+    print("Total execution time = {:.3f} sec".format(end_time - start_time))
+    print(
+        "Max memory used by tensors = {} bytes".format(
+            torch.cuda.max_memory_allocated()
+        )
+    )
+
+
+# ----------------------------------------------
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
     window or the global series average.
@@ -413,94 +514,103 @@ class MetricLogger(object):
         )
 
 
-def warmup_lr_scheduler(optimizer, warmup_iters, warmup_factor):
-    def f(x):
-        if x >= warmup_iters:
-            return 1
-        alpha = float(x) / warmup_iters
-        return warmup_factor * (1 - alpha) + alpha
-
-    return torch.optim.lr_scheduler.LambdaLR(optimizer, f)
-
-
-def mkdir(path):
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+def set_layer_lr(model, lr):
+    params = [
+        {"params": model.backbone.parameters(), "lr": lr / 10000},
+        {"params": model.rpn.parameters(), "lr": lr / 100},
+        {"params": model.roi_heads.parameters(), "lr": lr},
+    ]
+    return params
 
 
-def setup_for_distributed(is_master):
-    """
-    This function disables printing when not in master process
-    """
-    import builtins as __builtin__
+# def warmup_lr_scheduler(optimizer, warmup_iters, warmup_factor):
+#     def f(x):
+#         if x >= warmup_iters:
+#             return 1
+#         alpha = float(x) / warmup_iters
+#         return warmup_factor * (1 - alpha) + alpha
 
-    builtin_print = __builtin__.print
-
-    def print(*args, **kwargs):
-        force = kwargs.pop("force", False)
-        if is_master or force:
-            builtin_print(*args, **kwargs)
-
-    __builtin__.print = print
+#     return torch.optim.lr_scheduler.LambdaLR(optimizer, f)
 
 
-def is_dist_avail_and_initialized():
-    if not dist.is_available():
-        return False
-    if not dist.is_initialized():
-        return False
-    return True
+# def mkdir(path):
+#     try:
+#         os.makedirs(path)
+#     except OSError as e:
+#         if e.errno != errno.EEXIST:
+#             raise
 
 
-def get_world_size():
-    if not is_dist_avail_and_initialized():
-        return 1
-    return dist.get_world_size()
+# def setup_for_distributed(is_master):
+#     """
+#     This function disables printing when not in master process
+#     """
+#     import builtins as __builtin__
+
+#     builtin_print = __builtin__.print
+
+#     def print(*args, **kwargs):
+#         force = kwargs.pop("force", False)
+#         if is_master or force:
+#             builtin_print(*args, **kwargs)
+
+#     __builtin__.print = print
 
 
-def get_rank():
-    if not is_dist_avail_and_initialized():
-        return 0
-    return dist.get_rank()
+# def is_dist_avail_and_initialized():
+#     if not dist.is_available():
+#         return False
+#     if not dist.is_initialized():
+#         return False
+#     return True
 
 
-def is_main_process():
-    return get_rank() == 0
+# def get_world_size():
+#     if not is_dist_avail_and_initialized():
+#         return 1
+#     return dist.get_world_size()
 
 
-def save_on_master(*args, **kwargs):
-    if is_main_process():
-        torch.save(*args, **kwargs)
+# def get_rank():
+#     if not is_dist_avail_and_initialized():
+#         return 0
+#     return dist.get_rank()
 
 
-def init_distributed_mode(args):
-    if "RANK" in os.environ and "WORLD_SIZE" in os.environ:
-        args.rank = int(os.environ["RANK"])
-        args.world_size = int(os.environ["WORLD_SIZE"])
-        args.gpu = int(os.environ["LOCAL_RANK"])
-    elif "SLURM_PROCID" in os.environ:
-        args.rank = int(os.environ["SLURM_PROCID"])
-        args.gpu = args.rank % torch.cuda.device_count()
-    else:
-        print("Not using distributed mode")
-        args.distributed = False
-        return
+# def is_main_process():
+#     return get_rank() == 0
 
-    args.distributed = True
 
-    torch.cuda.set_device(args.gpu)
-    args.dist_backend = "nccl"
-    print(
-        "| distributed init (rank {}): {}".format(args.rank, args.dist_url), flush=True
-    )
-    torch.distributed.init_process_group(
-        backend=args.dist_backend,
-        init_method=args.dist_url,
-        world_size=args.world_size,
-        rank=args.rank,
-    )
-    torch.distributed.barrier()
-    setup_for_distributed(args.rank == 0)
+# def save_on_master(*args, **kwargs):
+#     if is_main_process():
+#         torch.save(*args, **kwargs)
+
+
+# def init_distributed_mode(args):
+#     if "RANK" in os.environ and "WORLD_SIZE" in os.environ:
+#         args.rank = int(os.environ["RANK"])
+#         args.world_size = int(os.environ["WORLD_SIZE"])
+#         args.gpu = int(os.environ["LOCAL_RANK"])
+#     elif "SLURM_PROCID" in os.environ:
+#         args.rank = int(os.environ["SLURM_PROCID"])
+#         args.gpu = args.rank % torch.cuda.device_count()
+#     else:
+#         print("Not using distributed mode")
+#         args.distributed = False
+#         return
+
+#     args.distributed = True
+
+#     torch.cuda.set_device(args.gpu)
+#     args.dist_backend = "nccl"
+#     print(
+#         "| distributed init (rank {}): {}".format(args.rank, args.dist_url), flush=True
+#     )
+#     torch.distributed.init_process_group(
+#         backend=args.dist_backend,
+#         init_method=args.dist_url,
+#         world_size=args.world_size,
+#         rank=args.rank,
+#     )
+#     torch.distributed.barrier()
+#     setup_for_distributed(args.rank == 0)

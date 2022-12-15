@@ -6,12 +6,8 @@ from datetime import datetime
 import torch
 import torch.nn as nn
 from pycocotools.coco import COCO
-from tqdm import tqdm
-
-import torchvision
 from torchvision._internally_replaced_utils import load_state_dict_from_url
 from torchvision.models.convnext import convnext_small
-from torchvision.models.detection import KeypointRCNN
 from torchvision.models.detection._utils import overwrite_eps
 from torchvision.models.detection.backbone_utils import (
     _resnet_fpn_extractor,
@@ -19,6 +15,10 @@ from torchvision.models.detection.backbone_utils import (
 )
 from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.models.resnet import resnet50, resnet152, resnext50_32x4d
+from tqdm import tqdm
+
+import torchvision
+from torchvision.models.detection import KeypointRCNN
 from torchvision.ops import misc as misc_nn_ops
 
 if __name__ != "model1.model.model":
@@ -103,6 +103,7 @@ class CustomKeypointRCNN(KeypointRCNN):
         self.device = (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
+        # self.device = torch.device("cpu")
         self.to(self.device)
         # key = "keypointrcnn_resnet50_fpn_coco"
         # model_urls = {
@@ -121,14 +122,22 @@ class CustomKeypointRCNN(KeypointRCNN):
 
         self.frozen_layers = dict()
         for name, param in self.named_parameters():
-            if "backbone" in name:
+            if "body.layer1" in name or "body.conv1" in name:
                 param.requires_grad = False
             self.frozen_layers[name] = param.requires_grad
             logging.debug(name)
             logging.debug(param.requires_grad)
 
         logging.debug("Init Layers:")
+
         self.apply(self._init_weights)
+        # with open("init test kaiming only", "w") as f:
+        #     for n, b in self.named_children():
+        #         for na, ba in b.named_parameters():
+        #             f.write(f"{na} - > {ba[0]}\n")
+        # import sys
+
+        # sys.exit()
 
     @staticmethod
     def _init_weights(m):
@@ -142,7 +151,6 @@ class CustomKeypointRCNN(KeypointRCNN):
                     nn.init.kaiming_normal_(
                         mod.weight, mode="fan_in", nonlinearity="relu"
                     )
-                    # nn.init.zeros_(m.weight)
                     if mod.bias is not None:
                         nn.init.zeros_(mod.bias)
 
@@ -184,7 +192,6 @@ class CustomKeypointRCNN(KeypointRCNN):
         num_epochs=1,
         train_dl=None,
         valid_dl=None,
-        valid_data_coco_indices=None,
         optimizer=None,
         lr_scheduler=None,
         save_interval=1,
@@ -350,50 +357,50 @@ class CustomKeypointRCNN(KeypointRCNN):
             valid_error = None
             # prof.export_chrome_trace("trace.json")
 
-            self.eval()
-            for i, (images, targets) in valid_loop_batch:
-                images = list(image.to(self.device) for image in images)
-                targets = [
-                    {k: v.to(self.device) for k, v in t.items()} for t in targets
-                ]
-            with torch.inference_mode():
-                outputs = self(images, targets)
-                output_preds = outputs[0]
-                output_losses = outputs[1]
+            # self.eval()
+            # for i, (images, targets) in valid_loop_batch:
+            #     images = list(image.to(self.device) for image in images)
+            #     targets = [
+            #         {k: v.to(self.device) for k, v in t.items()} for t in targets
+            #     ]
+            # with torch.inference_mode():
+            #     outputs = self(images, targets)
+            #     output_preds = outputs[0]
+            #     output_losses = outputs[1]
 
-                valid_loss = sum(loss for loss in output_losses.values())
-                total_valid_loss += valid_loss.item()
+            #     valid_loss = sum(loss for loss in output_losses.values())
+            #     total_valid_loss += valid_loss.item()
 
-                batch_mae = torch.abs(
-                    [t["keypoints"][..., :2] for t in output_preds][0]
-                    - [t["keypoints"][..., :2] for t in targets][0]
-                ).mean()
+            #     batch_mae = torch.abs(
+            #         [t["keypoints"][..., :2] for t in output_preds][0]
+            #         - [t["keypoints"][..., :2] for t in targets][0]
+            #     ).mean()
 
-                if valid_error == None:
-                    valid_error = batch_mae.unsqueeze(0)
+            #     if valid_error == None:
+            #         valid_error = batch_mae.unsqueeze(0)
 
-                else:
-                    valid_error = torch.cat((valid_error, batch_mae.unsqueeze(0)))
+            #     else:
+            #         valid_error = torch.cat((valid_error, batch_mae.unsqueeze(0)))
 
-                if i % 100 == 0:
-                    valid_error = valid_error.mean()
-                    print("MAE LOG")
-                    wandb.log({"valid_error (MAE)": valid_error})
-                    valid_error = None
+            #     if i % 100 == 0:
+            #         valid_error = valid_error.mean()
+            #         print("MAE LOG")
+            #         wandb.log({"valid_error (MAE)": valid_error})
+            #         valid_error = None
 
-            with torch.inference_mode():
-                avg_train_loss = total_train_loss / len(self.train_dl)
-                avg_train_losses.append(avg_train_loss)
+            # with torch.inference_mode():
+            #     avg_train_loss = total_train_loss / len(self.train_dl)
+            #     avg_train_losses.append(avg_train_loss)
 
-                avg_valid_loss = total_valid_loss / len(self.valid_dl)
-                avg_valid_losses.append(avg_valid_loss)
+            #     avg_valid_loss = total_valid_loss / len(self.valid_dl)
+            #     avg_valid_losses.append(avg_valid_loss)
 
             if epoch % save_interval == 0:
                 cpkt = {
                     "net": self.state_dict(),
                     "epoch": epoch,
                     "optim": optimizer.state_dict(),
-                    "valid_data_coco_indices": valid_data_coco_indices,
+                    # "valid_data_coco_indices": valid_data_coco_indices,
                     "frozen_layers": self.frozen_layers,
                 }
                 ckpt_path = f"checkpoints/model_checkpoint_keypoints_{self.num_keypoints}_epoch_{epoch}_{datetime.now().strftime('%Y-%m-%d-%H%M')}.ckpt"

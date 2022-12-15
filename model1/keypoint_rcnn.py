@@ -29,8 +29,8 @@ wandb_tags = [
 ROOT_DIR = Path(os.path.dirname(os.path.realpath(__file__)))
 EPOCHS = 1
 BATCH_SIZE = 1
-# LR = 25e-4
-LR = 1e-4
+LR = 25e-4
+# LR = 1e-4
 NUM_CLASSES = 2
 NUM_WORKERS = 3
 NUM_KEYPOINTS = 23
@@ -293,13 +293,14 @@ if __name__ == "__main__":
             settings=wandb.Settings(code_dir="."),
         )
 
+        model.register_buffer("valid_data_coco_indices", valid_data_coco_indices[0])
+
         model._train(
             num_epochs=opt.epochs,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             train_dl=train_loader,
             valid_dl=valid_loader,
-            valid_data_coco_indices=valid_data_coco_indices,
         )
 
         # if opt.dummy_data:
