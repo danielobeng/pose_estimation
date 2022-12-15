@@ -50,7 +50,7 @@ We used 2 sources of data, and merged
 		(Image source source from [Benchmarking and Error Diagnosis in Multi-Instance Pose Estimation](https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf))
 		- This implies that, despite the average label coordinate for a keypoint being a single pixel location, a broader definition is used to define a "correct" keypoint classification. There are many pixels in any given image that are considered part of the eye. There must still however be some threshold to define what is part of the eye and what is not.
 		- One method could be to do image segmentation on each joint area, but this is more time consuming and not the approach used here.
-		- By considering the variance of the keypoint annotators ($k_i^2$), who inevitably place (inter-rater and intra-rater) the keypoint in different locations, a sort of "wisdom of the crowds" approach is used to delimit the keypoints:
+		- By considering the variance of the keypoint annotators ( $k_i^2$ ), who inevitably place (inter-rater and intra-rater) the keypoint in different locations, a sort of "wisdom of the crowds" approach is used to delimit the keypoints:
 			- Keypoints that are easier to locate precisely will have smaller variances (e.g. eyes), harder to locate or poorly defined joints ("hip") end up with a larger variance. The larger the variance, the more tolerance there will be on the final measure score
 			- During inference, the closer the predicted keypoint is to it's annotation mean value, the higher the keypoint similarity with a maximum value of 1 (when a prediction = mean annotation value) - the spread of the Gaussian determines how quickly the keypoint similarity score increases
 			- If the prediction falls outside of the defined threshold set by the Gaussian curve, the prediction is truncated/rounded to 0
@@ -58,7 +58,7 @@ We used 2 sources of data, and merged
 		- given there is an inherent variance in the focal lengths of the cameras used in the images which we do not know, we should expect additional variance to be caused from this
 		- even if we could specify a specific location, human anatomy varies per person, creating ambiguity on what that point really is
 
-#### Calculating Keypoint Similarity ($ks$)
+#### Calculating Keypoint Similarity ( $ks$ )
 $$
 ks(\hat\theta_i^{(p)}, \theta_i^{(p)}) = e^{-\frac{||\hat\theta_i^{(p)} - \theta_i^{(p)}||^2_2}{2s^2k^2_i}}
 $$
