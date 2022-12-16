@@ -52,7 +52,7 @@ We used 2 sources of data, and merged
   - The "Keypoint Similarity" part is essentially a Euclidean distance metric calculation between the coordinates of the ground truth label and the predicted keypoint coordinates with some additional considerations
     - When using this methodology, it is implied that multiple annotators will annotate the same keypoints on the same image, such that a mean and standard deviation of their annotation locations can be generated
     - A Gaussian distribution with this mean and standard deviation is used to delimit an "area" within which the keypoint coordinate can lie
-    - ![[Pasted image 20220830001043.png]]
+    - ![Pasted image 20220830001043.png](../media/Pasted%20image%2020220830001043.png?raw=true)
       (Image source source from [Benchmarking and Error Diagnosis in Multi-Instance Pose Estimation](https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf))
     - This implies that, despite the average label coordinate for a keypoint being a single pixel location, a broader definition is used to define a "correct" keypoint classification. There are many pixels in any given image that are considered part of the eye. There must still however be some threshold to define what is part of the eye and what is not.
     - One method could be to do image segmentation on each joint area, but this is more time consuming and not the approach used here.
