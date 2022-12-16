@@ -68,7 +68,7 @@ $$
 ks(\hat\theta_i^{(p)}, \theta_i^{(p)}) = e^{-\frac{||\hat\theta_i^{(p)} - \theta_i^{(p)}||^2_2}{2s^2k^2_i}}
 $$
 
-- $ks$ is measured for each keypoint $i$ on each person $p$ by finding the L2 norm between the predicted ($\hat{\theta}$) and the ground truth ($\theta$) coordinate values. ($\theta$) is the mean annotation value
+- $ks$ is measured for each keypoint $i$ on each person $p$ by finding the L2 norm between the predicted ( $\hat{\theta}$ ) and the ground truth ( $\theta$ ) coordinate values. ( $\theta$ ) is the mean annotation value
 - $s$ is the scaling factor - the square root of the object segment area, which is the area of each individual bounding box. This is for scale invariance between each person detected.
   - Why do we need scale invariance?
   - The smallest unit of length in a digital image is a pixel. However, the distance each pixel represents in an image differs. A pixel far in the background of an image represents a larger area than a pixel of something close up to the camera lens.
@@ -106,7 +106,7 @@ $$
 
 #### Calculating $OKS$
 
-- To find the final $OKS$ score, we take the average keypoint similarity scores for each person $p$ for all visible keypoints ($v_i$ > 0 where $v_i=1$ means occluded keypoint, $v_i=2$ means visible keypoint, $\delta$ function returns 1 if $v_i > 0$)
+- To find the final $OKS$ score, we take the average keypoint similarity scores for each person $p$ for all visible keypoints ( $v_i$ > 0 where $v_i=1$ means occluded keypoint, $v_i=2$ means visible keypoint, $\delta$ function returns 1 if $v_i > 0$ )
 
 $$
 OKS(\hat\theta_i^{(p)}, \theta_i^{(p)}) = \frac{\sum_i{ks(\hat\theta_i^{(p)}, \theta_i^{(p)})\delta(v_i>0)}}{\sum_i{\delta(v_i>0)}}
