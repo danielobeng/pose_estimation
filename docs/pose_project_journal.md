@@ -152,28 +152,28 @@ for name, param in self.named_parameters():
 - Initially, the model is trained on 11 examples only for the training set and 11 examples for the validation set, and run for 500 epochs
 - This is performed to ensure the model can be trained without issue - if the model cannot be overfit, then the model is unable to reach losses low enough to provide a useful solution
 - As the training loss continues to decrease, the validation loss rises - this tells us that our model is overfit
-  ![W&B Chart 8_29_2022, 11_34_23 PM (1).svg](<../../media/W&B%20Chart%208_29_2022,%2011_34_23%20PM%20(1).svg.png?raw=true>)
+  ![[W&B Chart 8_29_2022, 11_34_23 PM (1).svg]]
 
 - This is also an opportunity to test the analysis metrics
 - Below is the precision-recall curve for the predictions on the training data. It is possible to achieve 1.0 PR score for Oks@0.5, but interestingly we cannot seem to find any keypoints when 0ks > 0.9
 - It is unclear why this may be, it could be due to this being such a high standard applied to a small number of examples (which may indicate the difficulty of achieving this level of precision and recall for this model)
-  ![Pasted image 20220829235043.png|500](../../media/Pasted%20image%2020220829235043.png?raw=true)
+  ![[Pasted image 20220829235043.png|500]]
 
 ### AdamW vs SGD
 
 - Using 1 cycle policy on the pre-trained model, it doesn't seem like it matters whether we used AdamW or SGD
-  ![W&B Chart 9_1_2022, 1_35_08 PM (1).svg|500](<../../media/W&B%20Chart%209_1_2022,%201_35_08%20PM%20(1).svg?raw=true>)
+  ![[W&B Chart 9_1_2022, 1_35_08 PM (1).svg|500]]
 
 ### Adaptive learning rate
 
 - Using an adaptive learning rate makes sense - In this case, using the 1cycle policy is used from https://arxiv.org/abs/1803.09820 - The idea is to train the model with 3 phases of learning rates 1. Increasing learning rates 2. Decreasing learning rates 3. Lower learning rate than the starting rate
-  ![W&B Chart 9_1_2022, 12_08_28 PM.svg|500](../../media/W&B%20Chart%209_1_2022,%2012_08_28%20PM.svg?raw=true)
+  ![[W&B Chart 9_1_2022, 12_08_28 PM.svg|500]]
 - Intuitively, this makes a lot of sense - Smith observed that midway through training, models can get stuck in a local minima too early - with a higher learning rate it makes it easier for the model to find a better minimum and then anneal the learning rate to get as close to the final local minimum as possible
 - In theory, this allows to both train the model with higher learning rates and reduce overfitting, because a high learning rate acts as a regulariser, it keeps the model from immediately settling
 
 - Scheduling 1 cycle vs no scheduling
-  ![W&B Chart 9_1_2022, 7_39_52 PM.svg|500](../../media/W&B%20Chart%209_1_2022,%207_39_52%20PM.svg?raw=true)
-  ![W&B Chart 9_1_2022, 7_40_05 PM.svg|500](../../media/W&B%20Chart%209_1_2022,%207_40_05%20PM.svg?raw=true)
+  ![[W&B Chart 9_1_2022, 7_39_52 PM.svg|500]]
+  ![[W&B Chart 9_1_2022, 7_40_05 PM.svg|500]]
 - Gradient accumulation
   - show gradient accum vs non gradient accum graps
 
@@ -189,7 +189,7 @@ for name, param in self.named_parameters():
 ####
 
 - It seems like
-  ![Pasted image 20221010153443.png|500](../../media/Pasted%20image%2020221010153443.png?raw=true) ![Pasted image 20220903112023.png|500](../../media/Pasted%20image%2020220903112023.png?raw=true)
+  ![[Pasted image 20221010153443.png|500]] ![[Pasted image 20220903112023.png|500]]
 
 - The first thing required is to implement a tool for error analysis on the validation set
   - this will need to be run after training is complete so that we get the parameters after training
@@ -199,15 +199,15 @@ for name, param in self.named_parameters():
 #### What the error types are and where they occur (train set, test set)
 
 - Examples of error types we can see in the worst fit examples on our **validation set** - False positive human detections
-  ![Pasted image 20220903105025.png|500](../../media/Pasted%20image%2020220903105025.png?raw=true)
+  ![[Pasted image 20220903105025.png|500]]
 - Making detections on more keypoints than are visible
-  ![Pasted image 20220903105131.png|500](../../media/Pasted%20image%2020220903105131.png?raw=true) ![Pasted image 20220903111353.png|500](../../media/Pasted%20image%2020220903111353.png?raw=true)
+  ![[Pasted image 20220903105131.png|500]] ![[Pasted image 20220903111353.png|500]]
 
-![Pasted image 20220903115803.png|500](../../media/Pasted%20image%2020220903115803.png?raw=true) ![Pasted image 20220903115723.png|500](../../media/Pasted%20image%2020220903115723.png?raw=true) ![Pasted image 20220903115630.png|500](../../media/Pasted%20image%2020220903115630.png?raw=true)
+![[Pasted image 20220903115803.png|500]] ![[Pasted image 20220903115723.png|500]] ![[Pasted image 20220903115630.png|500]]
 
 #### What can I do to solve them and how easy each solution is ( how confident you are in the solution working - you might need to assess this somehow)
 
-![Screenshot 2022-07-10 at 10.56.22.png|500](../../media/Screenshot%202022-07-10%20at%2010.56.22.png?raw=true)
+     ![[Screenshot 2022-07-10 at 10.56.22.png|500]]
 
 - error analysis on entire pipeline "augmentative analysis/enrichment analysis"
 
@@ -250,7 +250,7 @@ for name, param in self.named_parameters():
 #### Overfitting the model
 
 - To ensure the model will train correctly, the model is overfit by training on only 11 examples for 500 epochs - The image below shows that the model can be overfit (training loss decreasing, validation loss increasing) and is able to overfit more than the smaller resnet-50 model. This would be expected given it has more parameters that can be overfit
-  ![Pasted image 20221003140243.png|1000](../../media/Pasted%20image%2020221003140243.png?raw=true)
+  ![[Pasted image 20221003140243.png|1000]]
 
 ### Post-process improvements
 
@@ -264,7 +264,7 @@ for name, param in self.named_parameters():
   - a non-parametric strategy is required because how the coordinates jitter (up or down) is unknown in advance. Therefore a parametric curve fit would only provide a good fit if the number of large jitters matched the number of parameters
   - LOWESS is simply linear regression applied over a sliding window, sliding over each point
 - The image below shows examples of the smoothing on a person's right knee in the x and y coordinates respectively - The green marker shows the predictions from the model and where it sometimes predicts sudden deviations from what is likely - Such values are outliers and are replaced with an interpolation from the previous coordinates - We can define an outlier as a keypoint coordinate that deviates from it's nearest neighbour by more that 1 std (which is show by the orange line and )
-  ![Pasted image 20220927140538.png|1200](../../media/Pasted%20image%2020220927140538.png?raw=true)
+  ![[Pasted image 20220927140538.png|1200]]
 
 ## Experiments
 
