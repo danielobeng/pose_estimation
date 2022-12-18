@@ -6,15 +6,23 @@
 
 ## Model architecture
 
-- The model architecture is PyTorch's implementation of keypoints RCNN with some modifications to take advantage of the pre-trained models but to train on 23 keypoints
+- The initial model architecture is PyTorch's implementation of keypoints RCNN with some modifications to take advantage of the pre-trained models but to train on 23 keypoints. Other architechtures will be tried.
 
 ## Data
 
-We used 2 sources of data, and merged
+2 sources of data are used:
 
-- The general format of the keypoint data is
-  - `[x, y, v]`
-  - `x` and `y` are the coordinates of the keypoint, `v` indicates whether a keypoint is visible in the image, occluded or outside the image frame
+1. 2017 images and annotations from the original COCO dataset (https://cocodataset.org/#download)
+2. Annotatinos from https://cmu-perceptual-computing-lab.github.io/foot_keypoint_dataset/ which contains 6 foot keypoints not present in the COCO dataset, also formatted in the COCO format. This dataset is smaller, and uses some of the images from the original COCO dataset.
+
+### Annotation Format
+
+- The general format of the keypoint annotations is:
+  - `[x, y, v]` where `x` and `y` are the coordinates of the keypoint, `v` indicates whether a keypoint is visible in the image, occluded or outside the image frame
+
+### Data munging
+
+- For some reason the foot training set only had the 6 foot keypoints as annotatinos, and therefore had to be munged with the original COCO dataset. Combining these datasets requires therefore finding the keypoints from the foot dataset with matching IDs from the original COCO dataset and producing a new dataset containing both by appending the feet keypoints to the end of the keypoint list
 
 ### EDA
 
@@ -28,19 +36,13 @@ We used 2 sources of data, and merged
     - fit regressions to see if correlations
   - violin plot
 
-- Looking at the data, notice that all the keypoints are treated independently. In reality, we know that keypoints are structurally connected by the skeletal structure of the body, yet we only take this into consideration when visualizing the data. This seems like valuable information that could improve the results
+- Looking at the data, all the keypoints are treated independently. In reality, we know that keypoints are structurally connected by the skeletal structure of the body, yet this is not taken into consideration when visualizing the data. This seems like valuable information that could improve the results by adding such features to the dataset.
 
 ### Feature Engineering
 
 - is there anything we can do with this data to improve the model before we even run it
 - better quality labels brute force
 - anything else?
-
-### Data munging
-
-- In order to train the model on 23 keypoints, we need a dataset that contains all 23 keypoints
-- Fortunately, there exists a dataset for this: https://cmu-perceptual-computing-lab.github.io/foot_keypoint_dataset/ which contains an additional 6 keypoints, formatted in the COCO format
-- Combining these datasets requires therefore finding the keypoints from the foot dataset with matching IDs from the original COCO dataset and producing a new dataset containing both by appending the feet keypoints to the end of the keypoint list
 
 ## Metrics
 
@@ -52,8 +54,7 @@ We used 2 sources of data, and merged
   - The "Keypoint Similarity" part is essentially a Euclidean distance metric calculation between the coordinates of the ground truth label and the predicted keypoint coordinates with some additional considerations
     - When using this methodology, it is implied that multiple annotators will annotate the same keypoints on the same image, such that a mean and standard deviation of their annotation locations can be generated
     - A Gaussian distribution with this mean and standard deviation is used to delimit an "area" within which the keypoint coordinate can lie
-    - ![Pasted image 20220830001043.png](../../media/Pasted%20image%2020220830001043.png?raw=true)
-      (Image source source from [Benchmarking and Error Diagnosis in Multi-Instance Pose Estimation](https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf))
+      ![../../media/Pasted%20image%2020220830001043.png?raw=true](https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf)Benchmarking and Error Diagnosis in Multi-Instance Pose Estimation
     - This implies that, despite the average label coordinate for a keypoint being a single pixel location, a broader definition is used to define a "correct" keypoint classification. There are many pixels in any given image that are considered part of the eye. There must still however be some threshold to define what is part of the eye and what is not.
     - One method could be to do image segmentation on each joint area, but this is more time consuming and not the approach used here.
     - By considering the variance of the keypoint annotators ( $k_i^2$ ), who inevitably place (inter-rater and intra-rater) the keypoint in different locations, a sort of "wisdom of the crowds" approach is used to delimit the keypoints:
@@ -71,8 +72,8 @@ $$
 - $ks$ is measured for each keypoint $i$ on each person $p$ by finding the L2 norm between the predicted ( $\hat{\theta}$ ) and the ground truth ( $\theta$ ) coordinate values. ( $\theta$ ) is the mean annotation value
 - $s$ is the scaling factor - the square root of the object segment area, which is the area of each individual bounding box. This is for scale invariance between each person detected.
   - Why do we need scale invariance?
-  - The smallest unit of length in a digital image is a pixel. However, the distance each pixel represents in an image differs. A pixel far in the background of an image represents a larger area than a pixel of something close up to the camera lens.
-  - Therefore, a variance of one pixel should be more significant for a person far into the background of an image versus a person very close to the camera.
+  - The smallest unit of length in a digital image is a pixel. However, the area each pixel represents in an image differs. A pixel far in the background of an image represents a larger area than a pixel of something close the camera lens.
+  - Therefore, a variance by one pixel should be more significant for the keypoints of person in the background of an image versus a person close to the camera.
 - $k_i$ is the standard deviation from the keypoint annotators, specific to each keypoint $i$
   - The values for $k_i$ are in the table below. Most were calculated by the MS COCO team as the original annotators. The last 6 keypoints representing foot locations are assumed to have similar variance to wrists, as gathering more accurate values would require running a study with annotators based on where they place the markers.
 
