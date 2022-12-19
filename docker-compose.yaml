@@ -1,0 +1,16 @@
+services:
+  krcnn:
+    build: .
+    container_name: keypoint_estimator
+    stdin_open: true
+    volumes:
+      - ./model1:/krcnn_experiments/model1
+      - ./model1/inference:/krcnn_experiments/model1/inference
+      - /data:/krcnn_experiments/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
