@@ -31,18 +31,12 @@
 - summary statistics
 - graphs
 
-  - sns distribution plots
-  - scatter plot
-    - fit regressions to see if correlations
-  - violin plot
-
 - Looking at the data, all the keypoints are treated independently. In reality, we know that keypoints are structurally connected by the skeletal structure of the body, yet this is not taken into consideration when visualizing the data. This seems like valuable information that could improve the results by adding such features to the dataset.
 
 ### Feature Engineering
 
 - is there anything we can do with this data to improve the model before we even run it
-- better quality labels brute force
-- anything else?
+- better quality labels - the labelling here is likely quite imprecise and inconsistent between labellers. No methodology has been provided on how the labelling was done.
 
 ## Metrics
 
@@ -139,9 +133,9 @@ $$
 
 ### Vanilla Pytorch KeypointRCNN
 
-- Pytorch's keypoint RCNN model pre-trained on 17 keypoints was used - This model uses a Resnet50 backbone, but fine tunes most of the layers - All weights in the backbone were frozen up to the FPN layers (confirmed by comparing the weights of the backbone vs loading pytorch's keypoint RCNN)
+- Pytorch's keypoint RCNN model pre-trained on 17 keypoints was used - This model uses a Resnet-50 backbone, but fine tunes most of the layers - All weights in the backbone were frozen up to the FPN layers (confirmed by comparing the weights of the backbone vs loading pytorch's keypoint RCNN)
 
-- When training on 23 keypoints with the resnet50 backbone
+- When training on 23 keypoints with the Resnet-50 backbone
   - It is likely that the initial layers of the nnet already know all the features that might also be useful for detecting feet keypoints, so freezing more layers is worth doing (up to ROI layers)
 
 ```python
@@ -169,9 +163,9 @@ for name, param in self.named_parameters():
 
 ### Adaptive learning rate
 
-- Using an adaptive learning rate makes sense - In this case, using the 1cycle policy is used from [1] - The idea is to train the model with 3 phases of learning rates 1. Increasing learning rates 2. Decreasing learning rates 3. Lower learning rate than the starting rate
+- Using an adaptive learning rate makes sense - In this case, using the 1cycle policy is used from [[2]](#2) - The idea is to train the model with 3 phases of learning rates 1. Increasing learning rates 2. Decreasing learning rates 3. Lower learning rate than the starting rate
   ![W&B Chart 9_1_2022, 12_08_28 PM.svg|500](../../media/W&B%20Chart%209_1_2022,%2012_08_28%20PM.svg?raw=true)
-- Intuitively, this makes a lot of sense - in the paper [1] Smith observed that midway through training, models can get stuck in a local minima too early - with a higher learning rate it makes it easier for the model to find a better minimum and then anneal the learning rate to get as close to the final local minimum as possible
+- Intuitively, this makes a lot of sense - in the paper [[2]](#2) Smith observed that midway through training, models can get stuck in a local minima too early - with a higher learning rate it makes it easier for the model to find a better minimum and then anneal the learning rate to get as close to the final local minimum as possible
 - In theory, this allows to both train the model with higher learning rates and reduce overfitting, because a high learning rate acts as a regulariser, it keeps the model from immediately settling
 
 - Scheduling 1 cycle vs no scheduling
@@ -208,12 +202,9 @@ for name, param in self.named_parameters():
 
 ![Pasted image 20220903115803.png|500](../../media/Pasted%20image%2020220903115803.png?raw=true) ![Pasted image 20220903115723.png|500](../../media/Pasted%20image%2020220903115723.png?raw=true) ![Pasted image 20220903115630.png|500](../../media/Pasted%20image%2020220903115630.png?raw=true)
 
-#### What can I do to solve them and how easy each solution is ( how confident you are in the solution working - you might need to assess this somehow)
+- TODO
 
-![Screenshot 2022-07-10 at 10.56.22.png|500](../../media/Screenshot%202022-07-10%20at%2010.56.22.png?raw=true)
-
-- error analysis on entire pipeline "augmentative analysis/enrichment analysis"
-
+  - error analysis on entire pipeline "augmentative analysis/enrichment analysis"
   - create a diagram of ml pipeline even through the model (as has backbone)
   - eg perfect bounding boxes to see how much of the error is caused by bounding box being incorrect
 
@@ -224,15 +215,9 @@ for name, param in self.named_parameters():
 
   - remove components from pipeline one at a time to see where it breaks
 
-- fastai implementation
-
-### Changing the model size
-
-- Until now, a resnet50 model has been used as the backbone for training the model as it is faster it iterate. It is worth experimenting with different models and model sizes that can produce more accurate results
-
 ### Resnet-152
 
-- The changes for using a resnet 152 model are straightforward, the backbone of the model must be changed
+- The changes for using a Resnet-152 model are straightforward, the backbone of the model must be changed
 
 ```python
 backbone = resnet152(
@@ -242,18 +227,13 @@ norm_layer=misc_nn_ops.FrozenBatchNorm2d,
 )
 ```
 
-- Given the rest of the model is built off the keypoint rcnn model in pytorch, using any existing weight from the rest of the network is not possible for fine tuning, only the resnet part of the model does not need to be trained
+- Given the rest of the model is built off the keypoint RCNN model in pytorch, using any existing weight from the rest of the network is not possible for fine tuning, only the resnet part of the model does not need to be trained
 
 ```python
 for name, param in self.named_parameters():
 	if "backbone" in name:
 		param.requires_grad = False
 ```
-
-#### Overfitting the model
-
-- To ensure the model will train correctly, the model is overfit by training on only 11 examples for 500 epochs - The image below shows that the model can be overfit (training loss decreasing, validation loss increasing) and is able to overfit more than the smaller resnet-50 model. This would be expected given it has more parameters that can be overfit
-  ![Pasted image 20221003140243.png|1000](../../media/Pasted%20image%2020221003140243.png?raw=true)
 
 ### Post-process improvements
 
@@ -263,7 +243,7 @@ for name, param in self.named_parameters():
 
 - This applies mainly to video
 - Given that small movements between the predicted location of joints are arbitrary, we can smooth the positioning with a simple weighted average smoothing
-- The idea is to leverage the time dimension (in training we treat every image as independent because there is no squential image dataset) by plotting each keypoint over time
+- The idea is to leverage the time dimension (in training we treat every image as independent because there is no sequential image dataset) by plotting each keypoint over time
 - For smoothing, Locally Weighted Scatterplot Smooting (LOWESS) works reasonably well as a starting point
   - a non-parametric strategy is required because how the coordinates jitter (up or down) is unknown in advance. A parametric curve fit would only provide a good fit if the number of large jitters matched the number of parameters
   - LOWESS is simply linear regression applied over a sliding window, sliding over each point
@@ -277,8 +257,14 @@ for name, param in self.named_parameters():
 ### Pre-train tests
 
 - Overfitting
-- - Checking if any labels are missing in your training and validation datasets
+- Checking if any labels are missing in your training and validation datasets
 - Check the single gradient to find the loss of data
+- Visualise the data just before it is passed to the model
+
+#### Overfitting the model
+
+- To ensure the model will train correctly, the model is overfit by training on only 11 examples for 500 epochs - The image below shows that the model can be overfit (training loss decreasing, validation loss increasing) and is able to overfit more than the smaller resnet-50 model. This would be expected given it has more parameters that can be overfit
+  ![Pasted image 20221003140243.png|1000](../../media/Pasted%20image%2020221003140243.png?raw=true)
 
 ## Results
 
@@ -286,16 +272,20 @@ for name, param in self.named_parameters():
 
 - A docker container has been created in order to replicate the results. c.f. Docker README
 
-## Unaddressed issues
+## Unaddressed issues/thoughts
 
-- Currently it seems the model cannot decide to only place some keypoints and tries to place all keypoints even if only part of a person is visible on the image - it might not be able to set coordinates to 0 on x-y well because that's the lowest possible value so it will always be biased above? Not sure needs investigating
-- If we wanted to fine tune the model on specific data type eg people running, we could be more precise with anchor box choice in terms of aspec ratios and size for example because a person running will only be upright (by definition )
+- Currently it seems the model cannot choose to only place some keypoints and tries to place all keypoints even if only part of a person is visible on the image - it might not be able to set coordinates to 0 on x-y well because that's the lowest possible value so it will always be biased above? Need to understand this better
+- If we wanted to fine tune the model on specific data type eg people running, we could be more precise with anchor box choice in terms of aspect ratios and size for example because a person running will only be upright (by definition )
 
-### self-supervised learning
+### Self-supervised learning
 
-- this technique is particuarly interesting because if it is possible to train a model merely on data with no direct annotations where the more data it is given, the better the results, we can save a lot of annotating time
+- This technique is particularly interesting because if it is possible to train a model merely on data with no direct annotations where the more data it is given, the better the results, we can save a lot of annotating time
 
 # References
 
-- [1]: https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf "COCO Paper"
-- [2]: https://arxiv.org/abs/1803.09820 "One Cycle Policy Paper"
+- <a id="1">[1]</a>
+  COCO Paper
+  https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf
+- <a id="2">[2]</a>
+  One Cycle Policy Paper
+  https://arxiv.org/abs/1803.09820
