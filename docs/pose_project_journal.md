@@ -1,4 +1,4 @@
-# Pose estimation and tracking in PyTorch
+# Pose estimation and tracking with PyTorch
 
 ## Problem statement
 
