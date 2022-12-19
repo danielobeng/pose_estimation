@@ -55,8 +55,8 @@
     - When using this methodology, it is implied that multiple annotators will annotate the same keypoints on the same image, such that a mean and standard deviation of their annotation locations can be generated
     - A Gaussian distribution with this mean and standard deviation is used to delimit an "area" within which the keypoint coordinate can lie
       ![../../media/Pasted%20image%2020220830001043.png?raw=true](https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf)Benchmarking and Error Diagnosis in Multi-Instance Pose Estimation
-    - This implies that, despite the average label coordinate for a keypoint being a single pixel location, a broader definition is used to define a "correct" keypoint classification. There are many pixels in any given image that are considered part of the eye. There must still however be some threshold to define what is part of the eye and what is not.
-    - One method could be to do image segmentation on each joint area, but this is more time consuming and not the approach used here.
+    - This implies that, despite the label coordinate for a keypoint being a single pixel location, a broader definition is used to define a "correct" keypoint classification. There are many pixels in any given image that are considered part of the eye for example.
+    - One method would be to do image segmentation on each keypoint, but this is more time consuming and not the approach used here.
     - By considering the variance of the keypoint annotators ( $k_i^2$ ), who inevitably place (inter-rater and intra-rater) the keypoint in different locations, a sort of "wisdom of the crowds" approach is used to delimit the keypoints:
       - Keypoints that are easier to locate precisely will have smaller variances (e.g. eyes), harder to locate or poorly defined joints ("hip") end up with a larger variance. The larger the variance, the more tolerance there will be on the final measure score
       - During inference, the closer the predicted keypoint is to it's annotation mean value, the higher the keypoint similarity with a maximum value of 1 (when a prediction = mean annotation value) - the spread of the Gaussian determines how quickly the keypoint similarity score increases
@@ -66,6 +66,7 @@
 #### Calculating Keypoint Similarity ( $ks$ )
 
 $$
+\large
 ks(\hat\theta_i^{(p)}, \theta_i^{(p)}) = e^{-\frac{||\hat\theta_i^{(p)} - \theta_i^{(p)}||^2_2}{2s^2k^2_i}}
 $$
 
@@ -110,13 +111,14 @@ $$
 - To find the final $OKS$ score, we take the average keypoint similarity scores for each person $p$ for all visible keypoints ( $v_i$ > 0 where $v_i=1$ means occluded keypoint, $v_i=2$ means visible keypoint, $\delta$ function returns 1 if $v_i > 0$ )
 
 $$
+\large
 OKS(\hat\theta_i^{(p)}, \theta_i^{(p)}) = \frac{\sum_i{ks(\hat\theta_i^{(p)}, \theta_i^{(p)})\delta(v_i>0)}}{\sum_i{\delta(v_i>0)}}
 $$
 
 ### $OKS$ Thresholding
 
 - Using $OKS$ values, we can set a threshold at which a predicted keypoint is deemed a 'correct' prediction. This is means, if the prediction is within a certain 'standard deviation'
-  - this turns our problem from a regression problem into a classification problem, allowing us to measure an accuracy, precision and recall as we have can measure true positive, false positive and false negative values
+  - this turns our problem from a regression problem into a classification problem, allowing us to measure accuracy, precision and recall as we have can measure true positive, false positive and false negative values
     - In our case accuracy is less helpful because we are also interested in the keypoints we miss (false negatives) as much as how precise we are with the ones we detect. Accuracy is not a good metric when a high number of false negatives are predicted. Precision and recall however are very useful.
   - We can then create precision recall curves and use the AUC as our single metric to track how well the model is making predictions
 
@@ -130,13 +132,17 @@ $$
     - oks threshold represented by the different lines
   - the reason why the PR curve might not reach a recall value of 1 is because there are keypoints (people) that are never detected no matter how uncertain the model is about a prediction.
 
-- How the area under the curve is calculated for the precision recall values matters - the COCO implementation uses interpolation between points which is an optimistic answer
+- How the area under the curve is calculated for the precision recall values matters - the COCO implementation uses interpolation between points which is an optimistic answer. This doesn't matter so much as long as this method is used consistently in all evaluations.
   - We can choose different OKS thresholds (eg OKs = 0.5, 0.6, 0.7, 0.8, 0.9, 0.95) to understand the trade-off between making correct and precise predictions and how confident the model is in it's predictions. If less confident predictions are allowed, precision will drop but fewer keypoints will be missed.
 
 ## Model Training
 
-- Pytorch's keypoint RCNN model pre-trained on 17 keypoints was used initially but modified for 23 keypoints.
-  - It is likely that the initial layers of the nnet already know all the shapes that might also be useful for detecting feet keypoints, so we can focus the training on the later layers of the model by only training from the roi
+### Vanilla Pytorch KeypointRCNN
+
+- Pytorch's keypoint RCNN model pre-trained on 17 keypoints was used - This model uses a Resnet50 backbone, but fine tunes most of the layers - All weights in the backbone were frozen up to the FPN layers (confirmed by comparing the weights of the backbone vs loading pytorch's keypoint RCNN)
+
+- When training on 23 keypoints with the resnet50 backbone
+  - It is likely that the initial layers of the nnet already know all the features that might also be useful for detecting feet keypoints, so freezing more layers is worth doing (up to ROI layers)
 
 ```python
 for name, param in self.named_parameters():
@@ -146,9 +152,9 @@ for name, param in self.named_parameters():
 
 ### Overfitting the model
 
-- Initially, the model is trained on 11 examples only for the training set and 11 examples for the validation set, and run for 500 epochs
-- This is performed to ensure the model can be trained without issue - if the model cannot be overfit, then the model is unable to reach losses low enough to provide a useful solution
-- As the training loss continues to decrease, the validation loss rises - this tells us that our model is overfit
+- Before any model is trained, it is worth overfitting the model by training it on i by training it ons by training it on a small number of examples (eg. 11 examples) from the test and validation set, and run for 200+ epochs (until we see overfitting happen)
+- This proves useful to make sure there are not config errors, especially because we can check the model can actually reach low enough losses to be a useful model
+- As the training loss continues to decrease, the validation loss starts to rise - this tells us that our model is overfitting from this point
   ![W&B Chart 8_29_2022, 11_34_23 PM (1).svg](<../../media/W&B%20Chart%208_29_2022,%2011_34_23%20PM%20(1).svg.png?raw=true>)
 
 - This is also an opportunity to test the analysis metrics
@@ -163,9 +169,9 @@ for name, param in self.named_parameters():
 
 ### Adaptive learning rate
 
-- Using an adaptive learning rate makes sense - In this case, using the 1cycle policy is used from https://arxiv.org/abs/1803.09820 - The idea is to train the model with 3 phases of learning rates 1. Increasing learning rates 2. Decreasing learning rates 3. Lower learning rate than the starting rate
+- Using an adaptive learning rate makes sense - In this case, using the 1cycle policy is used from [1] - The idea is to train the model with 3 phases of learning rates 1. Increasing learning rates 2. Decreasing learning rates 3. Lower learning rate than the starting rate
   ![W&B Chart 9_1_2022, 12_08_28 PM.svg|500](../../media/W&B%20Chart%209_1_2022,%2012_08_28%20PM.svg?raw=true)
-- Intuitively, this makes a lot of sense - Smith observed that midway through training, models can get stuck in a local minima too early - with a higher learning rate it makes it easier for the model to find a better minimum and then anneal the learning rate to get as close to the final local minimum as possible
+- Intuitively, this makes a lot of sense - in the paper [1] Smith observed that midway through training, models can get stuck in a local minima too early - with a higher learning rate it makes it easier for the model to find a better minimum and then anneal the learning rate to get as close to the final local minimum as possible
 - In theory, this allows to both train the model with higher learning rates and reduce overfitting, because a high learning rate acts as a regulariser, it keeps the model from immediately settling
 
 - Scheduling 1 cycle vs no scheduling
@@ -253,21 +259,18 @@ for name, param in self.named_parameters():
 
 - We know that most of the errors we can face fall into one of a few categories: swaps, jitter, misses, inversions. We can do some post-processing to address some of these to improve the final output
 
-### Jitters
+#### Jitters
 
+- This applies mainly to video
 - Given that small movements between the predicted location of joints are arbitrary, we can smooth the positioning with a simple weighted average smoothing
-
-- For smoothing Locally Weighted Scatterplot Smooting (LOWESS) is used as it is a non-parametric
-  - a non-parametric strategy is required because how the coordinates jitter (up or down) is unknown in advance. Therefore a parametric curve fit would only provide a good fit if the number of large jitters matched the number of parameters
+- The idea is to leverage the time dimension (in training we treat every image as independent because there is no squential image dataset) by plotting each keypoint over time
+- For smoothing, Locally Weighted Scatterplot Smooting (LOWESS) works reasonably well as a starting point
+  - a non-parametric strategy is required because how the coordinates jitter (up or down) is unknown in advance. A parametric curve fit would only provide a good fit if the number of large jitters matched the number of parameters
   - LOWESS is simply linear regression applied over a sliding window, sliding over each point
 - The image below shows examples of the smoothing on a person's right knee in the x and y coordinates respectively - The green marker shows the predictions from the model and where it sometimes predicts sudden deviations from what is likely - Such values are outliers and are replaced with an interpolation from the previous coordinates - We can define an outlier as a keypoint coordinate that deviates from it's nearest neighbour by more that 1 std (which is show by the orange line and )
   ![Pasted image 20220927140538.png|1200](../../media/Pasted%20image%2020220927140538.png?raw=true)
 
 ## Experiments
-
-==implement ideas in this paper Clustering Anchor for Faster R-CNN to Improve Detection Results==
-
-- use adaptiveconcatpooling - implement yourself https://docs.fast.ai/layers.html#adaptiveconcatpool2d
 
 ## Testing
 
@@ -279,6 +282,10 @@ for name, param in self.named_parameters():
 
 ## Results
 
+## Replicating the results
+
+- A docker container has been created in order to replicate the results. c.f. Docker README
+
 ## Unaddressed issues
 
 - Currently it seems the model cannot decide to only place some keypoints and tries to place all keypoints even if only part of a person is visible on the image - it might not be able to set coordinates to 0 on x-y well because that's the lowest possible value so it will always be biased above? Not sure needs investigating
@@ -288,4 +295,7 @@ for name, param in self.named_parameters():
 
 - this technique is particuarly interesting because if it is possible to train a model merely on data with no direct annotations where the more data it is given, the better the results, we can save a lot of annotating time
 
-[1]: https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf
+# References
+
+- [1]: https://openaccess.thecvf.com/content_ICCV_2017/papers/Ronchi_Benchmarking_and_Error_ICCV_2017_paper.pdf "COCO Paper"
+- [2]: https://arxiv.org/abs/1803.09820 "One Cycle Policy Paper"
