@@ -90,8 +90,7 @@ class CustomKeypointRCNN(KeypointRCNN):
 
         self.init_timestamp = datetime.now().strftime("%Y-%m-%d-%H%M")
         self.num_keypoints = num_keypoints
-
-        # self.log_batch = False
+        self.log_batch = False
 
         trainable_backbone_layers = _validate_trainable_layers(True, None, 5, 3)
         backbone = self._load_backbone("resnet50")
@@ -100,11 +99,6 @@ class CustomKeypointRCNN(KeypointRCNN):
         super().__init__(
             backbone, num_classes=num_classes, num_keypoints=self.num_keypoints
         )
-        self.device = (
-            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        )
-        # self.device = torch.device("cpu")
-        self.to(self.device)
         # key = "keypointrcnn_resnet50_fpn_coco"
         # model_urls = {
         #     "keypointrcnn_resnet50_fpn_coco": "https://download.pytorch.org/models/keypointrcnn_resnet50_fpn_coco-fc266e95.pth",
@@ -122,16 +116,15 @@ class CustomKeypointRCNN(KeypointRCNN):
 
         self.frozen_layers = dict()
         for name, param in self.named_parameters():
-            if "body.layer1" in name or "body.conv1" in name:
+            if "body" in name and "fpn" not in name:
                 param.requires_grad = False
             self.frozen_layers[name] = param.requires_grad
             logging.debug(name)
             logging.debug(param.requires_grad)
 
         logging.debug("Init Layers:")
-
         self.apply(self._init_weights)
-        # with open("init test kaiming only", "w") as f:
+        # with open("load full only", "w") as f:
         #     for n, b in self.named_children():
         #         for na, ba in b.named_parameters():
         #             f.write(f"{na} - > {ba[0]}\n")
@@ -142,7 +135,7 @@ class CustomKeypointRCNN(KeypointRCNN):
     @staticmethod
     def _init_weights(m):
         for name, mod in m.named_modules():
-            if any(word in name for word in ["roi", "rpn"]):
+            if any(word in name for word in ["roi", "rpn", "fpn"]):
                 if (
                     isinstance(mod, (nn.Conv2d, nn.ConvTranspose2d, nn.Linear))
                     and "backbone" not in name
@@ -324,10 +317,10 @@ class CustomKeypointRCNN(KeypointRCNN):
                 #              'scatter_1': scatter})
 
                 self.loss_history.append(train_loss.item())
-                # self.log_batch = False
                 # TODO something that allows logging to work with overfit batch which is amller than 100
-                if i % 100 == 0:
-                    # self.log_batch = True
+
+                self.log_batch = True if i % 100 == 0 else False
+                if self.log_batch:
                     train_loop_batch.set_postfix(loss=train_loss.item())
                     wandb.log(loss_log, step=(self.current_epoch + 1) * i)
                     wandb.log(
@@ -357,50 +350,49 @@ class CustomKeypointRCNN(KeypointRCNN):
             valid_error = None
             # prof.export_chrome_trace("trace.json")
 
-            # self.eval()
-            # for i, (images, targets) in valid_loop_batch:
-            #     images = list(image.to(self.device) for image in images)
-            #     targets = [
-            #         {k: v.to(self.device) for k, v in t.items()} for t in targets
-            #     ]
-            # with torch.inference_mode():
-            #     outputs = self(images, targets)
-            #     output_preds = outputs[0]
-            #     output_losses = outputs[1]
+            self.eval()
+            for i, (images, targets) in valid_loop_batch:
+                images = list(image.to(self.device) for image in images)
+                targets = [
+                    {k: v.to(self.device) for k, v in t.items()} for t in targets
+                ]
+            with torch.inference_mode():
+                outputs = self(images, targets)
+                output_preds = outputs[0]
+                output_losses = outputs[1]
 
-            #     valid_loss = sum(loss for loss in output_losses.values())
-            #     total_valid_loss += valid_loss.item()
+                valid_loss = sum(loss for loss in output_losses.values())
+                total_valid_loss += valid_loss.item()
 
-            #     batch_mae = torch.abs(
-            #         [t["keypoints"][..., :2] for t in output_preds][0]
-            #         - [t["keypoints"][..., :2] for t in targets][0]
-            #     ).mean()
+                batch_mae = torch.abs(
+                    [t["keypoints"][..., :2] for t in output_preds][0]
+                    - [t["keypoints"][..., :2] for t in targets][0]
+                ).mean()
 
-            #     if valid_error == None:
-            #         valid_error = batch_mae.unsqueeze(0)
+                if valid_error == None:
+                    valid_error = batch_mae.unsqueeze(0)
 
-            #     else:
-            #         valid_error = torch.cat((valid_error, batch_mae.unsqueeze(0)))
+                else:
+                    valid_error = torch.cat((valid_error, batch_mae.unsqueeze(0)))
 
-            #     if i % 100 == 0:
-            #         valid_error = valid_error.mean()
-            #         print("MAE LOG")
-            #         wandb.log({"valid_error (MAE)": valid_error})
-            #         valid_error = None
+                if i % 100 == 0:
+                    valid_error = valid_error.mean()
+                    print("MAE LOG")
+                    wandb.log({"valid_error (MAE)": valid_error})
+                    valid_error = None
 
-            # with torch.inference_mode():
-            #     avg_train_loss = total_train_loss / len(self.train_dl)
-            #     avg_train_losses.append(avg_train_loss)
+            with torch.inference_mode():
+                avg_train_loss = total_train_loss / len(self.train_dl)
+                avg_train_losses.append(avg_train_loss)
 
-            #     avg_valid_loss = total_valid_loss / len(self.valid_dl)
-            #     avg_valid_losses.append(avg_valid_loss)
+                avg_valid_loss = total_valid_loss / len(self.valid_dl)
+                avg_valid_losses.append(avg_valid_loss)
 
             if epoch % save_interval == 0:
                 cpkt = {
                     "net": self.state_dict(),
                     "epoch": epoch,
                     "optim": optimizer.state_dict(),
-                    # "valid_data_coco_indices": valid_data_coco_indices,
                     "frozen_layers": self.frozen_layers,
                 }
                 ckpt_path = f"checkpoints/model_checkpoint_keypoints_{self.num_keypoints}_epoch_{epoch}_{datetime.now().strftime('%Y-%m-%d-%H%M')}.ckpt"

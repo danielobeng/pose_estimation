@@ -21,16 +21,10 @@ console = logging.StreamHandler()
 console.setLevel(logging.DEBUG)
 logging.getLogger().addHandler(console)
 
-wandb_notes = "adam w one cycle"
-wandb_tags = [
-    "baseline",
-]
-
 ROOT_DIR = Path(os.path.dirname(os.path.realpath(__file__)))
 EPOCHS = 1
 BATCH_SIZE = 1
 LR = 25e-4
-# LR = 1e-4
 NUM_CLASSES = 2
 NUM_WORKERS = 3
 NUM_KEYPOINTS = 23
@@ -122,7 +116,7 @@ if __name__ == "__main__":
         "--train",
         "-t",
         action="store_true",
-        help=f"Run in testing mode. (default: {False})",
+        help=f"Run in training mode. (default: {False})",
     )
     parser.add_argument(
         "--test",
@@ -171,6 +165,12 @@ if __name__ == "__main__":
         help=f"Loop from num_workers=1-20 to determine optimal num_workers. (default: {False})",
     )
     parser.add_argument(
+        "--device",
+        choices=["cpu", "cuda"],
+        default=False,
+        help=f"Choose device on which to train, test, and load data (default: {False})",
+    )
+    parser.add_argument(
         "--overfit",
         action="store_true",
         default=False,
@@ -182,6 +182,11 @@ if __name__ == "__main__":
     assert opt.train or opt.test, AssertionError(
         "Either --train or --test must be passed."
     )
+
+    wandb_notes = ""
+    wandb_tags = [
+        "",
+    ]
 
     wandb_config = dict(
         architecture="resnet",
@@ -230,6 +235,12 @@ if __name__ == "__main__":
         opt.num_classes,
         num_keypoints=opt.num_keypoints,
     )
+    model.device = (
+        torch.device("cuda")
+        if (torch.cuda.is_available() & opt.device == False)
+        else torch.device("cpu")
+    )
+    model.to(model.device)
     model.opt = opt
 
     if opt.optimize_workers:
